@@ -1,0 +1,9 @@
+#How to ignore a specific file?
+#1. Erase the files you want to igonre, if they're already part of the database.
+#2. You'll commit after erasing.
+#3. Add the file name at the end of this file
+#4. Commit and push
+#5. Create the specific file (file to ignore/ignored)
+# The file will be ignored
+
+*.pro.user
