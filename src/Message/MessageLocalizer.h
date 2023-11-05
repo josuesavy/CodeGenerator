@@ -1,7 +1,7 @@
 #ifndef MESSAGELOCALIZER_H
 #define MESSAGELOCALIZER_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "MessageTranslator.h"
 
 class MessageLocalizer : public AbstractParser, public AbstractSerializer

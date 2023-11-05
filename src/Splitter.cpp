@@ -101,12 +101,8 @@ void Splitter::readClass(QString line)
 
     list = list.mid(index+2, list.size()-index);
 
-    //qDebug()<<"ClassName"<<m_classInfos.name;
-
     foreach(const QString &inheritedName, list)
     {
-        //qDebug()<<"Inherited by class :"<<inheritedName;
-
         InheritedClass inherited;
         inherited.name = inheritedName;
 
@@ -224,15 +220,6 @@ void Splitter::readPrototype(QString line)
         }
     }
 
-//    if(function.prototype.returnType.type.isEmpty())
-//        qDebug()<<"Function"<<function.prototype.name;
-
-//    else
-//        qDebug()<<"Function"<<function.prototype.name+" - ("+function.prototype.returnType.type+")";
-
-//    foreach(const Variable &temp, function.prototype.parameters)
-//        qDebug()<<"Param :"<<temp.type<<temp.name<<temp.value;
-
     m_functions<<function;
 }
 
@@ -295,12 +282,14 @@ void Splitter::readClassVariable(QString line)
 
             else if(brackets > 0)
             {
-                variable.variable.isContainer = true;
                 variable.variable.containerShell.type += tempList[1][i];
+                variable.variable.isContainer = true;
             }
         }
 
     }
+
+    qDebug() << "---" << variable.variable.type;
 
 
     if(list.contains("="))

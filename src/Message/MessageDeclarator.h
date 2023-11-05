@@ -1,7 +1,7 @@
 #ifndef MESSAGEDECLARATOR_H
 #define MESSAGEDECLARATOR_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "MessageLocalizer.h"
 
 class MessageDeclarator : public AbstractSerializer

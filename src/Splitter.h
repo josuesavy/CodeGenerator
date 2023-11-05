@@ -4,6 +4,8 @@
 #include "Public.h"
 #include "AbstractParser.h"
 
+#include <QRegularExpression>
+
 class Splitter : public AbstractParser
 {
 public:

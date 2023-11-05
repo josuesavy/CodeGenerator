@@ -1,7 +1,7 @@
 #ifndef ENUMDECLARATOR_H
 #define ENUMDECLARATOR_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "EnumLocalizer.h"
 
 class EnumDeclarator : AbstractSerializer

@@ -1,10 +1,10 @@
 #ifndef CLASSTRANSLATOR_H
 #define CLASSTRANSLATOR_H
 
-#include "Public.h"
-#include "Translator.h"
-#include "Splitter.h"
-#include "SourceSerializer.h"
+#include "src/Public.h"
+#include "src/Translator.h"
+#include "src/Splitter.h"
+#include "src/SourceSerializer.h"
 
 class ClassTranslator : public AbstractParser, public AbstractSerializer
 {

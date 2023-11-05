@@ -1,8 +1,8 @@
 #ifndef DATATYPEDECLARATOR_H
 #define DATATYPEDECLARATOR_H
 
-#include "Public.h"
-#include "AbstractSerializer.h"
+#include "src/Public.h"
+#include "src/AbstractSerializer.h"
 #include "DataLocalizer.h"
 
 class DataTypeDeclarator : public AbstractSerializer

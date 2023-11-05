@@ -1,12 +1,12 @@
 #ifndef DATATRANSLATOR_H
 #define DATATRANSLATOR_H
 
-#include "Public.h"
-#include "AbstractParser.h"
-#include "AbstractSerializer.h"
-#include "Splitter.h"
-#include "Translator.h"
-#include "SourceSerializer.h"
+#include "src/Public.h"
+#include "src/AbstractParser.h"
+#include "src/AbstractSerializer.h"
+#include "src/Splitter.h"
+#include "src/Translator.h"
+#include "src/SourceSerializer.h"
 
 class DataTranslator : public AbstractParser, public AbstractSerializer
 {

@@ -1,7 +1,7 @@
 #ifndef CLASSLOCALIZER_H
 #define CLASSLOCALIZER_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "ClassTranslator.h"
 
 class ClassLocalizer : public AbstractParser, public AbstractSerializer

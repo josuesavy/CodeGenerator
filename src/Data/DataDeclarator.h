@@ -1,7 +1,7 @@
 #ifndef DATADECLARATOR_H
 #define DATADECLARATOR_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "DataLocalizer.h"
 
 class DataDeclarator : public AbstractSerializer

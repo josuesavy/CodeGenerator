@@ -1,7 +1,7 @@
 #ifndef CLASSENUM_H
 #define CLASSENUM_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "ClassLocalizer.h"
 
 class ClassEnum : public AbstractSerializer

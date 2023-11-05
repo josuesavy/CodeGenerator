@@ -1,7 +1,7 @@
 #ifndef DATALOCALIZER_H
 #define DATALOCALIZER_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "DataTranslator.h"
 
 class DataLocalizer : public AbstractParser, public AbstractSerializer

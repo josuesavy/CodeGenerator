@@ -1,7 +1,7 @@
 #ifndef CLASSMANAGER_H
 #define CLASSMANAGER_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "ClassLocalizer.h"
 
 class ClassManager : public AbstractParser, public AbstractSerializer

@@ -1,7 +1,7 @@
 #ifndef ENUMLOCALIZER_H
 #define ENUMLOCALIZER_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "EnumTranslator.h"
 
 class EnumLocalizer : public AbstractParser, public AbstractSerializer

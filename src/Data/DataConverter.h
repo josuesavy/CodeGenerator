@@ -1,7 +1,7 @@
 #ifndef DATACONVERTER_H
 #define DATACONVERTER_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "DataLocalizer.h"
 
 class DataConverter : public AbstractSerializer

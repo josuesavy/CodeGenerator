@@ -1,7 +1,7 @@
 #ifndef CLASSDECLARATOR_H
 #define CLASSDECLARATOR_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "ClassLocalizer.h"
 
 class ClassDeclarator : public AbstractSerializer

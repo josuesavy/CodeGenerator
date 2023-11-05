@@ -1,11 +1,11 @@
 #ifndef ENUMTRANSLATOR_H
 #define ENUMTRANSLATOR_H
 
-#include "Public.h"
-#include "AbstractParser.h"
-#include "AbstractSerializer.h"
-#include "Splitter.h"
-#include "Translator.h"
+#include "src/Public.h"
+#include "src/AbstractParser.h"
+#include "src/AbstractSerializer.h"
+#include "src/Splitter.h"
+#include "src/Translator.h"
 
 class EnumTranslator : public AbstractParser, public AbstractSerializer
 {

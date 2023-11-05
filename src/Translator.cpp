@@ -957,14 +957,6 @@ QString Translator::translateMethod(QString varName, QString contained, QString 
 
 QString Translator::fixLink(QString line)
 {
-//    if(line.contains("this.ranking = new ArenaRanking();"))
-//    {
-//        qDebug() << "ui";
-
-//        for(int i = 0; i < m_variables.size(); i++)
-//            qDebug() << m_variables.keys().at(i) << ":" << m_variables.values().at(i).link;
-//    }
-
     if(line.contains("= new "))
     {
         int indexBeg = line.indexOf("= new ")+2;
@@ -989,6 +981,8 @@ QString Translator::fixLink(QString line)
                     break;
             }
         }
+
+        qDebug() << "----" << typeName;
 
         if(m_variables.contains(typeName))
         {

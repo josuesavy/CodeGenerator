@@ -1,7 +1,7 @@
 #ifndef MESSAGEENUM_H
 #define MESSAGEENUM_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "MessageLocalizer.h"
 
 class MessageEnum : public AbstractSerializer

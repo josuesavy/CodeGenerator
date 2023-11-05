@@ -1,7 +1,7 @@
 #ifndef MESSAGEUTILS_H
 #define MESSAGEUTILS_H
 
-#include "Public.h"
+#include "src/Public.h"
 #include "MessageLocalizer.h"
 
 class MessageUtils : public AbstractSerializer
