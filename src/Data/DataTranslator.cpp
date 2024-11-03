@@ -62,8 +62,8 @@ void DataTranslator::serialize()
     {
         if(!Translator::isTranslated(classInfos.inheritedClasses[i].name))
         {
-            if(!Translator::isKnown(classInfos.inheritedClasses[i].name))
-                qWarning()<<"ERREUR - DataTranslator - Ne connait pas"<<classInfos.inheritedClasses[i].name<<"herite par la classe"<<getName();
+//            if(!Translator::isKnown(classInfos.inheritedClasses[i].name))
+//                qWarning()<<"ERREUR - DataTranslator - Ne connait pas"<<classInfos.inheritedClasses[i].name<<"herite par la classe"<<getName();
 
             classInfos.inheritedClasses.removeAt(i);
             i--;
@@ -191,8 +191,8 @@ void DataTranslator::serialize()
                 loadData.content += "\n";
             }
 
-            else
-                qWarning()<<"ERREUR - DataTranslator - A rencontre une variable de type inconnu"<<translatedVar.variable.type<<translatedVar.variable.containerShell.type<<"dans la classe"<<getDofusName();
+//            else
+//                qWarning()<<"ERREUR - DataTranslator - A rencontre une variable de type inconnu"<<translatedVar.variable.type<<translatedVar.variable.containerShell.type<<"dans la classe"<<getDofusName();
         }
 
         else if(var.inheritance == PRIVATE &&
@@ -318,12 +318,11 @@ QString DataTranslator::getFieldTranslatedLine(Variable variable, bool isFirst)
                 else if(variable.containerShell.type == "String")
                     line += "UTF";
 
-                // ADD
-                else if(variable.containerShell.type == "Rectangle")
-                    line += "Rect";
+                else if(variable.containerShell.type == "Vector.")
+                    line += "Vector";
 
-                else
-                    qWarning()<<"ERREUR - DataTranslator - Ne connait pas le type"<<variable.containerShell.type;
+//                else
+//                    qWarning()<<"ERREUR - DataTranslator - Ne connait pas le type"<<variable.containerShell.type;
 
                 line += "(data);";
             }
@@ -363,12 +362,11 @@ QString DataTranslator::getFieldTranslatedLine(Variable variable, bool isFirst)
                 else if(variable.containerShell.type == "String")
                     line += "UTF";
 
-                // ADD
-                else if(variable.containerShell.type == "Rectangle")
-                    line += "Rect";
+                else if(variable.containerShell.type == "Vector.")
+                    line += "Vector";
 
-                else
-                    qWarning()<<"ERREUR - DataTranslator - Ne connait pas le type"<<variable.containerShell.type;
+//                else
+//                    qWarning()<<"ERREUR - DataTranslator - Ne connait pas le type"<<variable.containerShell.type;
 
                 line += "(data);";
             }
@@ -386,6 +384,10 @@ QString DataTranslator::getFieldTranslatedLine(Variable variable, bool isFirst)
 
         else
         {
+            if (m_splitter.getClassInfos().name == "SoundAnimation"){
+                qDebug() << "ui";
+            }
+
             line += "read";
 
             if(variable.type == "uint")
@@ -403,9 +405,20 @@ QString DataTranslator::getFieldTranslatedLine(Variable variable, bool isFirst)
             else if(variable.type == "String")
                 line += "UTF";
 
-            // ADD
-            else if(variable.type == "Rectangle")
-                line += "Rect";
+            else if(variable.type == "Vector."){
+                if (variable.containerShell.type == "String")
+                    line += "Vector<Q"+variable.containerShell.type+">";
+                else if (variable.containerShell.type == "uint" ||
+                         variable.containerShell.type == "int" ||
+                         variable.containerShell.type == "double")
+                    line += "Vector<"+variable.containerShell.type+">";
+                else if (variable.containerShell.type == "Number")
+                    line += "Vector<double>";
+                else if (variable.containerShell.type == "Boolean")
+                    line += "Vector<bool>";
+                else
+                    line += "Vector<"+variable.containerShell.type+"Data>";
+            }
 
             else
                 qWarning()<<"ERREUR - DataTranslator - Ne connait pas le type"<<variable.type;
@@ -414,8 +427,8 @@ QString DataTranslator::getFieldTranslatedLine(Variable variable, bool isFirst)
         }
     }
 
-    else
-        qWarning()<<"ERREUR - DataTranslator - Ne connait pas le type"<<variable.type;
+//    else
+//        qWarning()<<"ERREUR - DataTranslator - Ne connait pas le type"<<variable.type;
 
 
     return line;

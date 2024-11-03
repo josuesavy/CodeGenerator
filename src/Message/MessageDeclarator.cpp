@@ -32,7 +32,7 @@ void MessageDeclarator::write()
     QFile file(m_output+"/"+MESSAGE_UTILS_PATH+"/"+m_fileName+".h");
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - MessageDeclarator - Ouverture du fichier echouée"<<m_output+"/"+MESSAGE_UTILS_PATH+"/"+m_fileName+".h";
+        qCritical()<<"ERROR - MessageDeclarator - Failed to open file"<<m_output+"/"+MESSAGE_UTILS_PATH+"/"+m_fileName+".h";
 
     file.resize(0);
 

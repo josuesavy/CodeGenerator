@@ -48,7 +48,7 @@ void MessageEnum::write()
     QFile file(m_output+"/"+MESSAGE_UTILS_PATH+"/"+m_fileName+".h");
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - MessageEnum - Ouverture du fichier echouee"<<m_output+"/"+MESSAGE_UTILS_PATH+"/"+m_fileName+".h";
+        qCritical()<<"ERROR - MessageEnum - Failed to open file"<<m_output+"/"+MESSAGE_UTILS_PATH+"/"+m_fileName+".h";
 
     file.resize(0);
 

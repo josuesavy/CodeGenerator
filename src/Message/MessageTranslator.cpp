@@ -23,7 +23,7 @@ void MessageTranslator::parse()
     {
         if(funct.prototype.name == "getMessageId")
         {
-            m_id = funct.content.split(" ", QString::SkipEmptyParts)[1].split(";", QString::SkipEmptyParts)[0].toInt();
+            m_id = funct.content.split(" ", Qt::SkipEmptyParts)[1].split(";", Qt::SkipEmptyParts)[0].toInt();
             break;
         }
     }
@@ -47,10 +47,10 @@ void MessageTranslator::serialize()
     {
         if(!Translator::isTranslated(classInfos.inheritedClasses[i].name))
         {
-            if(!Translator::isKnown(classInfos.inheritedClasses[i].name))
-                qWarning()<<"ERREUR - MessageTranslator - Ne connait pas"<<classInfos.inheritedClasses[i].name<<"herite par la classe"<<getName();
+//            if(!Translator::isKnown(classInfos.inheritedClasses[i].name))
+//                qWarning()<<"ERREUR - MessageTranslator - Ne connait pas"<<classInfos.inheritedClasses[i].name<<"herite par la classe"<<getName();
 
-            else if(classInfos.inheritedClasses[i].name == "INetworkDataContainerMessage")
+            /*else*/ if(classInfos.inheritedClasses[i].name == "INetworkDataContainerMessage")
             {
                 ClassVariable container;
                 container.variable.name = "content";
@@ -169,9 +169,9 @@ void MessageTranslator::serialize()
         {
             ClassVariable translatedVariable = Translator::translateClassVariable(variable);
 
-            // ADD
-            if(translatedVariable.variable.name == "register")
-                translatedVariable.variable.name = "m_"+translatedVariable.variable.name;
+//            // ADD
+//            if(translatedVariable.variable.name == "register")
+//                translatedVariable.variable.name = "m_"+translatedVariable.variable.name;
 
             m_source->getHeader().addClassVariable(translatedVariable);
         }

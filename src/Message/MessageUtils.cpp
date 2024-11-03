@@ -52,7 +52,7 @@ void MessageUtils::serialize()
 
     nameOut<<"\nelse";
     nameOut<<"\n{";
-    nameOut<<"\nqDebug()<<\"ERREUR - "<<MESSAGE_UTILS_NAME<<" - Ne connait pas l'enum :\"<<(int)messageEnum;";
+    nameOut<<"\nqDebug()<<\"ERROR - "<<MESSAGE_UTILS_NAME<<" - Don't know the enum:\"<<(int)messageEnum;";
     nameOut<<"\nreturn \"\";";
     nameOut<<"\n}";
 

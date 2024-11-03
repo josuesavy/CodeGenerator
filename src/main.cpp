@@ -1,31 +1,35 @@
 #include "Public.h"
 #include "GlobalTranslator.h"
 
-#include <QCoreApplication>
+#include <iostream>
+#include <chrono>
 
 int main(int argc, char *argv[])
 {   
-    QCoreApplication a(argc, argv);
+    auto start = std::chrono::high_resolution_clock::now();
 
-    QTime timer;
-    timer.start();
-
-    GlobalTranslator globalTranslator1("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + QString(MAJ_VERSION) + "/scripts", "C:/Users/SAVY/Documents/Translate", TRANSLATION_1);
+    GlobalTranslator globalTranslator1("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + std::string(MAJ_VERSION) + "/scripts", "C:/Users/SAVY/Documents/Translate", TRANSLATION_1);
 
     globalTranslator1.parse();
     globalTranslator1.serialize();
     globalTranslator1.write();
 
-    qDebug()<<"Traduction 1 terminée en"<<timer.elapsed()<<"ms";
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
+    std::cout<<"Traduction 1 terminée en"<<timer.elapsed()<<"ms"<<std::endl;
 
-    GlobalTranslator globalTranslator2("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + QString(MAJ_VERSION) + "/scripts", "C:/Users/SAVY/Documents/Translate", TRANSLATION_2);
+    start = std::chrono::high_resolution_clock::now();
+
+    GlobalTranslator globalTranslator2("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + std::string(MAJ_VERSION) + "/scripts", "C:/Users/SAVY/Documents/Translate", TRANSLATION_2);
 
     globalTranslator2.parse();
     globalTranslator2.serialize();
     globalTranslator2.write();
 
-    qDebug()<<"Traduction 2 terminée en"<<timer.elapsed()<<"ms";
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "Traduction 2 terminée en " << elapsed << " ms" << std::endl;
 
-    return a.exec();
+    return 0;
 }

@@ -70,20 +70,20 @@ FunctionData Translator::translateFunction(FunctionData function, QList<ClassVar
 
         if(line.contains(" = ClassManagerSingleton::get()->getClass"))
         {
-            QString varName;
-            QString varType;
-            if(line.contains("var "))
-            {
-                QString num = line.mid(0, line.indexOf(" = ClassManagerSingleton::get()->getClass")).simplified();
-                num.remove("var ");
-                varType = num.split(":").at(1);
-                varName = num.split(":").at(0);
-            }
-            else
-            {
-                varName = line.mid(0, line.indexOf(" = ClassManagerSingleton::get()->getClass")).simplified();
-                varName.remove("this.");
+            QString varName = line.mid(0, line.indexOf(" = ClassManagerSingleton::get()->getClass")).simplified();
+            varName.remove("this.");
 
+            QString varType;
+
+            if (varName.contains("var ")){
+                varName = varName.remove("var ");
+
+                QStringList list = varName.split(" ", Qt::SkipEmptyParts);
+                QString name = varName.split(":")[1];
+                QString type = list[0].split(":")[1];
+
+                varType = varName.split(":")[1];
+            } else {
                 varType = variables.values(varName)[0];
             }
 
@@ -100,32 +100,21 @@ FunctionData Translator::translateFunction(FunctionData function, QList<ClassVar
         line = fixLink(line);
         line = fixMissingTypeBug(line, variables);
 
-        list = line.split(' ');
-
-        if(line.contains("var "))
+        if (line.contains("for(var "))
         {
-            line = line.remove(QRegExp("\\bvar\\b"));
+            QString variableName = line.mid(line.indexOf("var ") + 4, line.indexOf(":") - (line.indexOf("var ") + 4));
+
+            line.replace("for(var " + variableName + ":uint =", "for(uint " + variableName + " =");
+            line.replace(":", " ");
+        }
+        else if(line.contains("var "))
+        {
+            line = line.remove("var ");
             line.replace("NaN;", "NULL;");
 
-            // ADD
-            QString name;
-            QString type;
-            bool hasFor = false;
-            QStringList list;
-
-            if(line.contains("for("))
-            {
-                list = line.split(" ", QString::SkipEmptyParts);
-                name = list[1].split(":")[0];
-                type = list[1].split(":")[1];
-                hasFor = true;
-            }
-            else
-            {
-                list = line.split(" ", QString::SkipEmptyParts);
-                name = list[0].split(":")[0];
-                type = list[0].split(":")[1];
-            }
+            QStringList list = line.split(" ", Qt::SkipEmptyParts);
+            QString name = list[0].split(":")[0];
+            QString type = list[0].split(":")[1];
 
             Variable variable;
             variable.type = type;
@@ -136,10 +125,6 @@ FunctionData Translator::translateFunction(FunctionData function, QList<ClassVar
 
             if(variable.link == SHARED_POINTER)
                 line += "QSharedPointer<";
-
-            // ADD
-            if(hasFor)
-                line += "for(";
 
             line += variable.type;
 
@@ -162,18 +147,25 @@ FunctionData Translator::translateFunction(FunctionData function, QList<ClassVar
             else if(!list.filter("null").isEmpty())
                 list.replace(list.indexOf(list.filter("null").first()), list.filter("null").first().replace("null", "NULL"));
 
-            if(hasFor)
-            {
-                for(int i = 2; i < list.size(); i++)
-                    line += " "+list[i];
-            }
-            else
-            {
-                for(int i = 1; i < list.size(); i++)
-                    line += " "+list[i];
-            }
+            for(int i = 1; i < list.size(); i++)
+                line += " "+list[i];
 
             variables.insert(name, type);
+        }
+
+        if (line.contains("(") && line.contains(" = ")){
+            QStringList list = line.split(" = ", Qt::SkipEmptyParts);
+            QString type = list[1].split("(")[0];
+
+            Variable variable;
+            variable.type = type;
+
+            variable = translateVariable(variable);
+
+            QString tempList = list[1];
+            list[1].replace(type, variable.type);
+
+            line.replace(tempList, list[1]);
         }
 
         if(line.contains("throw new Error"))
@@ -230,6 +222,20 @@ FunctionData Translator::translateFunction(FunctionData function, QList<ClassVar
             }
         }
 
+        if (line.contains(" = com.ankamagames.dofus") || line.contains(" = new com.ankamagames.dofus")){
+            QRegularExpression containerRegex("com\\.ankamagames\\.dofus(.+)$");
+            QRegularExpressionMatch containerMatch = containerRegex.match(line);
+            if (containerMatch.hasMatch()) {
+                QString num = containerMatch.captured(0);
+                QRegularExpression containerRegex2("(?<=\\.)[^\\.]+$");
+                QRegularExpressionMatch containerMatch2 = containerRegex2.match(num);
+                if (containerMatch2.hasMatch()) {
+                    QString num2 = containerMatch2.captured(0);;
+                    line.replace(num, num2);
+                }
+            }
+        }
+
         out<<line;
 
         if(in.pos()+1 < function.content.size())
@@ -265,8 +271,8 @@ Variable Translator::translateVariable(Variable variable)
         variable.type = m_variables[variable.type].translatedType;
     }
 
-    else if(!m_variables.contains(variable.type))
-        qWarning()<<"ERREUR - Translator - Le type"<<variable.type<<"n'est pas connu de la base de donnée";
+    //    else if(!m_variables.contains(variable.type))
+    //        qWarning()<<"ERREUR - Translator - Le type"<<variable.type<<"n'est pas connu de la base de donnée";
 
     return variable;
 }
@@ -386,8 +392,8 @@ QString Translator::translateConversion(QString line)
             return translateConversion(processMethod(line.replace(originalInstruction, translatedInstruction), translatedInstruction, variables));
         }
 
-        else
-            qWarning()<<"ERREUR - Translator - Ne connait pas la classe"<<convertClass;
+        //        else
+        //            qWarning()<<"ERREUR - Translator - Ne connait pas la classe"<<convertClass;
     }
 
     return line;
@@ -407,7 +413,7 @@ void Translator::init()
     {
         m_isInit = true;
 
-        addConversionVariable("Vector", "QList");
+        addConversionVariable("Vector.", "QList");
         addConversionVariable("ByteArray", "QByteArray");
         addConversionVariable("String", "QString");
         addConversionVariable("Boolean", "bool");
@@ -430,7 +436,6 @@ void Translator::init()
         addConversionVariable("ProtocolTypeManager", "ClassManagerSingleton", SINGLETON);
         addConversionVariable("BooleanByteWrapper", "BooleanByteWrapper", STATIC);
         addConversionVariable("FuncTree", "FuncTree");
-        addConversionVariable("Rectangle", "QRect");
 
         ConversionFunction funct;
 
@@ -659,16 +664,16 @@ void Translator::init()
 
         funct.originalName = "length";
         funct.translatedName = "size";
-        addFunction("Vector", funct);
+        addFunction("Vector.", funct);
 
         funct.originalName = "size";
         funct.translatedName = "size";
-        addFunction("Vector", funct);
+        addFunction("Vector.", funct);
 
         funct.originalName = "push";
         funct.translatedName  = "append";
         funct.parameters<<"#0#";
-        addFunction("Vector", funct);
+        addFunction("Vector.", funct);
     }
 }
 
@@ -796,11 +801,11 @@ QString Translator::processMethod(QString line, QString varName, QMultiHash<QStr
         if(m_variables[variables.values(varName)[useContainer]].functions.contains(functName) && !translated.contains(".\""))
             translated = translateMethod(varName, containerParameter, functName, parameters, variables, classInfos);
 
-        else if(!translated.contains(".\""))
-            qWarning()<<"ERREUR - Translator - Ne connait pas la fonction"<<functName
-                   <<"appartenant au type"<<variables.values(varName)[useContainer]
-                     <<"nomme ici"<<varName
-                    <<"ligne"<<line;
+        //        else if(!translated.contains(".\""))
+        //            qWarning()<<"ERREUR - Translator - Ne connait pas la fonction"<<functName
+        //                   <<"appartenant au type"<<variables.values(varName)[useContainer]
+        //                     <<"nomme ici"<<varName
+        //                    <<"ligne"<<line;
 
         line = processMethod(line.mid(0, indexBeg), varName, variables)+translated+processMethod(line.mid(indexEnd), varName, variables);
     }
@@ -982,7 +987,6 @@ QString Translator::fixLink(QString line)
             }
         }
 
-        qDebug() << "----" << typeName;
 
         if(m_variables.contains(typeName))
         {
@@ -996,8 +1000,8 @@ QString Translator::fixLink(QString line)
                 line.replace(line.mid(indexBeg, indexEnd-indexBeg), m_variables[typeName].translatedType);
         }
 
-        else
-            qWarning()<<"ERREUR - Translator - Ne connait pas le type"<<typeName;
+        //        else
+        //            qWarning()<<"ERREUR - Translator - Ne connait pas le type"<<typeName;
     }
 
     return line;
@@ -1071,8 +1075,8 @@ void Translator::addFunction(const QString &className, const ConversionFunction 
     if(m_variables.contains(className))
         m_variables[className].functions[funct.originalName] = funct;
 
-    else
-        qWarning()<<"ERREUR - Translator - Ne connait pas de classe du nom de"<<className<<"a qui l'on puisse rajouter la fonction"<<funct.originalName;
+    //    else
+    //        qWarning()<<"ERREUR - Translator - Ne connait pas de classe du nom de"<<className<<"a qui l'on puisse rajouter la fonction"<<funct.originalName;
 }
 
 bool Translator::isTranslated(const QString &className)

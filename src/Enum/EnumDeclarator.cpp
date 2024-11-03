@@ -17,8 +17,18 @@ void EnumDeclarator::serialize()
 
     out<<"\n";
 
+    out<<"#ifdef DELETE\n";
+    out<<"#undef DELETE\n";
+    out<<"#endif\n";
+
+    out<<"\n";
+
     foreach(const EnumTranslator &child, m_localizer->getChildren())
         out<<"#include \""<<child.getOutput().remove(m_output).remove(0,1)+child.getName()+".h"<<"\"\n";
+
+    out<<"#ifdef _WIN32\n";
+    out<<"#define DELETE 0\n";
+    out<<"#endif\n";
 
     out<<"\n#endif // "+m_fileName.toUpper()+"_H";
 

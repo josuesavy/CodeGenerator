@@ -101,10 +101,21 @@ void Splitter::readClass(QString line)
 
     list = list.mid(index+2, list.size()-index);
 
+    //qDebug()<<"ClassName"<<m_classInfos.name;
+
     foreach(const QString &inheritedName, list)
     {
+        //qDebug()<<"Inherited by class :"<<inheritedName;
+
         InheritedClass inherited;
-        inherited.name = inheritedName;
+
+        QRegularExpression containerRegex("(?<=\\.)[^\\.]+$");
+        QRegularExpressionMatch containerMatch = containerRegex.match(inheritedName);
+        if (containerMatch.hasMatch()) {
+            inherited.name = containerMatch.captured(0);
+        } else {
+            inherited.name = inheritedName;
+        }
 
         m_classInfos.inheritedClasses<<inherited;
     }
@@ -123,8 +134,8 @@ void Splitter::readPrototype(QString line)
     else if(line.contains("protected"))
         function.prototype.inheritance = PROTECTED;
 
-    else
-        qWarning()<<"ERREUR - Splitter - Prototype Inheritance - " + line;
+    //    else
+    //        qWarning()<<"ERREUR - Splitter - Prototype Inheritance";
 
     if(line.contains("override"))
         function.prototype.isVirtual = true;
@@ -220,6 +231,15 @@ void Splitter::readPrototype(QString line)
         }
     }
 
+    //    if(function.prototype.returnType.type.isEmpty())
+    //        qDebug()<<"Function"<<function.prototype.name;
+
+    //    else
+    //        qDebug()<<"Function"<<function.prototype.name+" - ("+function.prototype.returnType.type+")";
+
+    //    foreach(const Variable &temp, function.prototype.parameters)
+    //        qDebug()<<"Param :"<<temp.type<<temp.name<<temp.value;
+
     m_functions<<function;
 }
 
@@ -277,23 +297,36 @@ void Splitter::readClassVariable(QString line)
 
         if(tempList[1][i] != ' ' && tempList[1][i] != ';')
         {
-            if(brackets == 0 && tempList[1][i] != '.')
+            if(brackets == 0)
                 variable.variable.type += tempList[1][i];
 
             else if(brackets > 0)
             {
-                variable.variable.containerShell.type += tempList[1][i];
                 variable.variable.isContainer = true;
+                variable.variable.containerShell.type += tempList[1][i];
             }
         }
 
     }
 
-    qDebug() << "---" << variable.variable.type;
+    QRegularExpression containerRegex("(?<=\\.)[^\\.]+$");
+    QRegularExpressionMatch containerMatch = containerRegex.match(variable.variable.containerShell.type);
+    QRegularExpressionMatch containerMatch2 = containerRegex.match(variable.variable.type);
+    if (containerMatch.hasMatch()) {
+        variable.variable.containerShell.type = containerMatch.captured(0);
+        variable.variable.isContainer = true;
+    }
+    if (containerMatch2.hasMatch()) {
+        variable.variable.type = containerMatch2.captured(0);
+        //variable.variable.link = SHARED_POINTER;
+    }
 
-
-    if(list.contains("="))
-        variable.variable.value = list[list.size()-1];
+    if(list.contains("=")){
+        QString value = list[list.size()-1];
+        if (value.contains("String("))
+            value = value.replace("String(", "QString(");
+        variable.variable.value = value;
+    }
 
     if(list.contains("public"))
         variable.inheritance = PUBLIC;
@@ -304,8 +337,8 @@ void Splitter::readClassVariable(QString line)
     else if(list.contains("protected"))
         variable.inheritance = PROTECTED;
 
-    else
-        qWarning()<<"SPLITTER - ERREUR - Inheritance";
+    //    else
+    //        qWarning()<<"SPLITTER - ERREUR - Inheritance";
 
     if(list.contains("const"))
         variable.variable.isConstant = true;
