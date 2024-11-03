@@ -8,18 +8,20 @@
 #include "src/Translator.h"
 #include "src/SourceSerializer.h"
 
+#include <fstream>
+
 class DataTranslator : public AbstractParser, public AbstractSerializer
 {
 public:
-    DataTranslator(const QString &input, const QString &output);
+    DataTranslator(const std::string &input, const std::string &output);
     ~DataTranslator();
 
     virtual void parse();
     virtual void serialize();
     virtual void write();
 
-    void addManualInclude(QString include);
-    void addAnticipatedDeclaration(QString className, QString include);
+    void addManualInclude(std::string include);
+    void addAnticipatedDeclaration(std::string className, std::string include);
 
     QStringList getMissingIncludes() const;
     QString getName() const;
@@ -32,9 +34,9 @@ private:
 
     Splitter m_splitter;
     SourceSerializer *m_source;
-    QStringList m_manualIncludes;
+    std::vector<std::string> m_manualIncludes;
     QStringList m_missingIncludes;
-    QList<QPair<QString, QString>> m_anticipatedDeclarations;
+    std::vector<std::pair<std::string, std::string>> m_anticipatedDeclarations;
     QString m_module;
 };
 

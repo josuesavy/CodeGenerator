@@ -7,14 +7,14 @@
 class MessageEnum : public AbstractSerializer
 {
 public:
-    MessageEnum(const QString &output, MessageLocalizer *localizer);
+    MessageEnum(const std::string &output, MessageLocalizer *localizer);
 
     virtual void serialize();
     virtual void write();
 
 private:
-    QString m_fileName;
-    QByteArray m_content;
+    std::string m_fileName;
+    std::string m_content;
     MessageLocalizer *m_localizer;
 };
 

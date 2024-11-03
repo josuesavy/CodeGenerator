@@ -6,16 +6,16 @@
 class AbstractSerializer
 {
 public:
-    AbstractSerializer(const QString &output);
+    AbstractSerializer(const std::string &output);
     virtual ~AbstractSerializer();
 
     virtual void serialize() = 0;
     virtual void write() = 0;
 
-    QString getOutput() const;
+    std::string getOutput() const;
 
 protected:
-    QString m_output;
+    std::string m_output;
 };
 
 #endif // ABSTRACTSERIALIZER_H

@@ -1,6 +1,6 @@
 #include "ClassTranslator.h"
 
-ClassTranslator::ClassTranslator(const QString &input, const QString &output):
+ClassTranslator::ClassTranslator(const std::string &input, const std::string &output):
     AbstractParser(input),
     AbstractSerializer(output),
     m_splitter(input),
@@ -23,7 +23,7 @@ void ClassTranslator::parse()
     {
         if(funct.prototype.name == "getTypeId")
         {
-            m_id = funct.content.split(" ", QString::SkipEmptyParts)[1].split(";", QString::SkipEmptyParts)[0].toInt();
+            m_id = funct.content.split(" ", Qt::SkipEmptyParts)[1].split(";", Qt::SkipEmptyParts)[0].toInt();
             break;
         }
     }
@@ -72,9 +72,9 @@ void ClassTranslator::serialize()
 
     m_source = new SourceSerializer(m_output, classInfos);
 
-    m_source->getHeader().addInclude(QString(CLASS_UTILS_PATH)+"/"+QString(CLASS_BASE_NAME)+".h");
+    m_source->getHeader().addInclude(std::string(CLASS_UTILS_PATH)+"/"+std::string(CLASS_BASE_NAME)+".h");
 
-    foreach(const QString &include, m_manualIncludes)
+    foreach(const std::string &include, m_manualIncludes)
         m_source->getHeader().addInclude(include);
 
     for(int i = 0; i < m_anticipatedDeclarations.size(); i++)
@@ -85,9 +85,9 @@ void ClassTranslator::serialize()
 
     foreach(const QString &include, m_splitter.getIncludes())
     {
-        QString translated = Translator::translateInclude(include);
+        std::string translated = Translator::translateInclude(include).toStdString();
 
-        if(!translated.isEmpty())
+        if(!translated.empty())
             m_source->getHeader().addInclude(translated);
     }
 
@@ -199,18 +199,18 @@ void ClassTranslator::write()
     m_source->write();
 }
 
-void ClassTranslator::addManualInclude(QString include)
+void ClassTranslator::addManualInclude(std::string include)
 {
-    if(!m_manualIncludes.contains(include))
-        m_manualIncludes<<include;
+    if (std::find(m_manualIncludes.begin(), m_manualIncludes.end(), include) == m_manualIncludes.end())
+        m_manualIncludes.push_back(include);
 }
 
-void ClassTranslator::addAnticipatedDeclaration(QString className, QString include)
+void ClassTranslator::addAnticipatedDeclaration(std::string className, std::string include)
 {
-    QPair<QString, QString> pair;
+    std::pair<std::string, std::string> pair;
     pair.first = className;
     pair.second = include;
-    m_anticipatedDeclarations<<pair;
+    m_anticipatedDeclarations.push_back(pair);
 }
 
 QStringList ClassTranslator::getMissingIncludes() const

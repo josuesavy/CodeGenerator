@@ -1,6 +1,6 @@
 #include "AbstractSerializer.h"
 
-AbstractSerializer::AbstractSerializer(const QString &output):
+AbstractSerializer::AbstractSerializer(const std::string &output):
     m_output(output)
 {
 }
@@ -9,7 +9,7 @@ AbstractSerializer::~AbstractSerializer()
 {
 }
 
-QString AbstractSerializer::getOutput() const
+std::string AbstractSerializer::getOutput() const
 {
     return m_output;
 }

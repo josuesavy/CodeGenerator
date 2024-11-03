@@ -1,6 +1,6 @@
 #include "EnumTranslator.h"
 
-EnumTranslator::EnumTranslator(const QString &input, const QString &output):
+EnumTranslator::EnumTranslator(const std::string &input, const std::string &output):
     AbstractParser(input),
     AbstractSerializer(output),
     m_splitter(input)
@@ -16,21 +16,21 @@ void EnumTranslator::parse()
 void EnumTranslator::serialize()
 {
     m_content.clear();
-    QTextStream out(&m_content);
+    std::ostringstream out;
 
-    out<<"#ifndef "<<m_splitter.getClassInfos().name.toUpper()<<"_H\n";
-    out<<"#define "<<m_splitter.getClassInfos().name.toUpper()<<"_H\n";
+    out<<"#ifndef "<<toUpper(m_splitter.getClassInfos().name)<<"_H\n";
+    out<<"#define "<<toUpper(m_splitter.getClassInfos().name)<<"_H\n";
 
-    out<<"\nenum class "<<m_splitter.getClassInfos().name;
+    out<<"\nenum class "<<m_splitter.getClassInfos().name.toStdString();
     out<<"\n{";
 
     bool firstRound = true;
 
-    foreach(const ClassVariable &classVariable, m_splitter.getClassVariables())
+    for (const ClassVariable &classVariable : m_splitter.getClassVariables())
     {
         ConversionFunction enumVar;
         enumVar.originalName = classVariable.variable.name;
-        enumVar.translatedName = classVariable.variable.name.toUpper();
+        enumVar.translatedName = QString::fromStdString(toUpper(classVariable.variable.name));
 
         Translator::addFunction(m_splitter.getClassInfos().name, enumVar);
 
@@ -40,37 +40,34 @@ void EnumTranslator::serialize()
         else
             out<<",";
 
-        out<<"\n    "<<classVariable.variable.name.toUpper()<<" = "<<classVariable.variable.value;
+        out<<"\n    "<<toUpper(classVariable.variable.name)<<" = "<<classVariable.variable.value.toStdString();
     }
 
     out<<"\n};\n";
 
-    out<<"\n#endif // "<<m_splitter.getClassInfos().name.toUpper()<<"_H";
+    out<<"\n#endif // "<<toUpper(m_splitter.getClassInfos().name)<<"_H";
 
-    out.flush();
+    m_content = out.str();
 }
 
 void EnumTranslator::write()
 {
-    QDir().mkpath(m_output);
+    std::filesystem::create_directories(m_output);
 
-    QFile file(m_output+"/"+m_splitter.getClassInfos().name+".h");
+    std::string filePath = m_output + "/" + m_splitter.getClassInfos().name.toStdString() + ".h";
+    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - EnumTranslator - Ouverture du fichier echouée"<<m_output;
+    if (!file.is_open())
+    {
+        std::cerr << "ERREUR - EnumTranslator - Ouverture du fichier échouée: " << filePath << std::endl;
+        return;
+    }
 
-    file.resize(0);
-
-    QTextStream out(&file);
-
-    out<<m_content;
-
-    out.flush();
-
+    file << m_content;
     file.close();
 }
 
-QString EnumTranslator::getName() const
+std::string EnumTranslator::getName() const
 {
-    return m_splitter.getClassInfos().name;
+    return m_splitter.getClassInfos().name.toStdString();
 }

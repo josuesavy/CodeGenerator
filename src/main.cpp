@@ -8,7 +8,9 @@ int main(int argc, char *argv[])
 {   
     auto start = std::chrono::high_resolution_clock::now();
 
-    GlobalTranslator globalTranslator1("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + std::string(MAJ_VERSION) + "/scripts", "C:/Users/SAVY/Documents/Translate", TRANSLATION_1);
+    GlobalTranslator globalTranslator1("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + std::string(MAJ_VERSION) + "/scripts",
+                                       "C:/Users/SAVY/Documents/Translate",
+                                       TRANSLATION_1);
 
     globalTranslator1.parse();
     globalTranslator1.serialize();
@@ -16,12 +18,14 @@ int main(int argc, char *argv[])
 
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "Translation 1 completed in " << elapsed << "ms" << std::endl << std::endl;
 
-    std::cout<<"Traduction 1 terminée en"<<timer.elapsed()<<"ms"<<std::endl;
 
     start = std::chrono::high_resolution_clock::now();
 
-    GlobalTranslator globalTranslator2("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + std::string(MAJ_VERSION) + "/scripts", "C:/Users/SAVY/Documents/Translate", TRANSLATION_2);
+    GlobalTranslator globalTranslator2("C:/Users/SAVY/Documents/Dofus/Sources-Codes/" + std::string(MAJ_VERSION) + "/scripts",
+                                       "C:/Users/SAVY/Documents/Translate",
+                                       TRANSLATION_2);
 
     globalTranslator2.parse();
     globalTranslator2.serialize();
@@ -29,7 +33,7 @@ int main(int argc, char *argv[])
 
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    std::cout << "Traduction 2 terminée en " << elapsed << " ms" << std::endl;
+    std::cout << "Translation 2 completed in " << elapsed << " ms" << std::endl << std::endl;
 
     return 0;
 }

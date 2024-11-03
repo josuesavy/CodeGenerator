@@ -13,6 +13,8 @@
 #include "Data/DataTypeDeclarator.h"
 #include "Data/DataConverter.h"
 
+#include <iostream>
+
 enum TranslationPart
 {
     TRANSLATION_1, TRANSLATION_2
@@ -21,7 +23,7 @@ enum TranslationPart
 class GlobalTranslator : public AbstractParser, public AbstractSerializer
 {
 public:
-    GlobalTranslator(const QString &input, const QString &output, TranslationPart translationPart);
+    GlobalTranslator(const std::string &input, const std::string &output, TranslationPart translationPart);
 
     virtual void parse();
     virtual void serialize();

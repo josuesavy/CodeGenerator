@@ -7,16 +7,16 @@
 class EnumLocalizer : public AbstractParser, public AbstractSerializer
 {
 public:
-    EnumLocalizer(const QString &input, const QString &output);
+    EnumLocalizer(const std::string &input, const std::string &output);
 
     virtual void parse();
     virtual void serialize();
     virtual void write();
 
-    const QList<EnumTranslator> &getChildren() const;
+    const std::vector<EnumTranslator> &getChildren() const;
 
 private:
-    QList<EnumTranslator> m_children;
+    std::vector<EnumTranslator> m_children;
 };
 
 #endif // ENUMLOCALIZER_H

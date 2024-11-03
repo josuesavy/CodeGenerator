@@ -8,14 +8,14 @@
 class DataTypeDeclarator : public AbstractSerializer
 {
 public:
-    DataTypeDeclarator(const QString &output, DataLocalizer *localizer);
+    DataTypeDeclarator(const std::string &output, DataLocalizer *localizer);
 
     virtual void serialize();
     virtual void write();
 
 private:
-    QString m_fileName;
-    QByteArray m_content;
+    std::string m_fileName;
+    std::string m_content;
     DataLocalizer *m_localizer;
 };
 

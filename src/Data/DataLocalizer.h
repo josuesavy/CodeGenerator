@@ -7,7 +7,7 @@
 class DataLocalizer : public AbstractParser, public AbstractSerializer
 {
 public:
-    DataLocalizer(const QString &input, const QString &output);
+    DataLocalizer(const std::string &input, const std::string &output);
 
     virtual void parse();
     virtual void serialize();
@@ -17,7 +17,7 @@ public:
     const QList<DataTranslator> &getUselessChildren() const;
 
 private:
-    void loadChild(QString childName, QHash<QString, int> &toLoad, QString previous = "", bool ignorePrevious = false);
+    void loadChild(std::string childName, std::unordered_map<std::string, int> &toLoad, std::string previous = "", bool ignorePrevious = false);
 
     QList<DataTranslator> m_children;
     QList<DataTranslator> m_uselessChildren;

@@ -1,12 +1,12 @@
 #include "HeaderSerializer.h"
 
-HeaderSerializer::HeaderSerializer(const QString &output, const ClassInfos &classInfos):
+HeaderSerializer::HeaderSerializer(const std::string &output, const ClassInfos &classInfos):
     AbstractSerializer(output),
     m_classInfos(classInfos),
     m_hasConstructor(false),
     m_needsConstructor(false)
 {
-    foreach(const InheritedClass &inherited, m_classInfos.inheritedClasses)
+    for(const InheritedClass &inherited : m_classInfos.inheritedClasses)
     {
         if(!inherited.passedParameters.isEmpty())
         {
@@ -19,35 +19,35 @@ HeaderSerializer::HeaderSerializer(const QString &output, const ClassInfos &clas
 void HeaderSerializer::serialize()
 {
     m_content.clear();
-    QTextStream out(&m_content);
+    std::ostringstream out;
 
-    out<<"#ifndef "<<m_classInfos.name.toUpper()<<"_H\n";
-    out<<"#define "<<m_classInfos.name.toUpper()<<"_H\n";
+    out<<"#ifndef "<<toUpper(m_classInfos.name)<<"_H\n";
+    out<<"#define "<<toUpper(m_classInfos.name)<<"_H\n";
 
-    if(!m_includes.isEmpty())
+    if(!m_includes.empty())
         out<<"\n";
 
     if(m_classInfos.isSingleton)
         out<<"#include \""<<SINGLETON_PATH<<"\"\n";
 
-    foreach(const QString &include, m_includes)
+    for(const std::string &include : m_includes)
         out<<"#include \""<<include<<"\"\n";
 
     out<<"\n";
 
     if(m_classInfos.isSingleton)
-        out<<"class "<<m_classInfos.name<<"Singleton;\n\n";
+        out<<"class "<<m_classInfos.name.toStdString()<<"Singleton;\n\n";
 
 
-    if(!m_implicitClasses.isEmpty())
+    if(!m_implicitClasses.empty())
     {
-        foreach(const QString &implicitClass, m_implicitClasses)
+        for(const std::string &implicitClass : m_implicitClasses)
             out<<"class "<<implicitClass<<";\n";
 
         out<<"\n";
     }
 
-    out<<"class "<<m_classInfos.name;
+    out<<"class "<<m_classInfos.name.toStdString();
 
     if(!m_classInfos.inheritedClasses.isEmpty())
     {
@@ -64,7 +64,7 @@ void HeaderSerializer::serialize()
             else
                 out <<"protected ";
 
-            out<<m_classInfos.inheritedClasses[i].name;
+            out<<m_classInfos.inheritedClasses[i].name.toStdString();
 
             if(i+1 != m_classInfos.inheritedClasses.size())
                 out<<", ";
@@ -74,7 +74,7 @@ void HeaderSerializer::serialize()
     out<<"\n{";
 
     if(m_classInfos.isSingleton)
-        out<<"\n  friend Singleton<"<<m_classInfos.name<<">;\n";
+        out<<"\n  friend Singleton<"<<m_classInfos.name.toStdString()<<">;\n";
 
     bool hasAlreadyWritten = false;
     bool publicAlreadyDeclared = false;
@@ -85,10 +85,10 @@ void HeaderSerializer::serialize()
     {
         FunctionPrototype constructor;
         constructor.name = m_classInfos.name;
-        m_prototypes.insert(0, constructor);
+        m_prototypes.insert(m_prototypes.begin(), constructor);
     }
 
-    foreach(const FunctionPrototype &prototype, m_prototypes)
+    for(const FunctionPrototype &prototype : m_prototypes)
     {
         if(prototype.inheritance == PUBLIC)
         {
@@ -110,7 +110,7 @@ void HeaderSerializer::serialize()
         hasAlreadyWritten = false;
     }
 
-    foreach(const ClassVariable &variable, m_variables)
+    for(const ClassVariable &variable : m_variables)
     {
         if(variable.inheritance == PUBLIC)
         {
@@ -132,7 +132,7 @@ void HeaderSerializer::serialize()
         hasAlreadyWritten = false;
     }
 
-    foreach(const FunctionPrototype &prototype, m_prototypes)
+    for(const FunctionPrototype &prototype : m_prototypes)
     {
         if(prototype.inheritance == PRIVATE)
         {
@@ -154,7 +154,7 @@ void HeaderSerializer::serialize()
         hasAlreadyWritten = false;
     }
 
-    foreach(const ClassVariable &variable, m_variables)
+    for(const ClassVariable &variable : m_variables)
     {
         if(variable.inheritance == PRIVATE)
         {
@@ -177,7 +177,7 @@ void HeaderSerializer::serialize()
         hasAlreadyWritten = false;
     }
 
-    foreach(const FunctionPrototype &prototype, m_prototypes)
+    for(const FunctionPrototype &prototype : m_prototypes)
     {
         if(prototype.inheritance == PROTECTED)
         {
@@ -199,7 +199,7 @@ void HeaderSerializer::serialize()
         hasAlreadyWritten = false;
     }
 
-    foreach(const ClassVariable &variable, m_variables)
+    for(const ClassVariable &variable : m_variables)
     {
         if(variable.inheritance == PROTECTED)
         {
@@ -219,42 +219,39 @@ void HeaderSerializer::serialize()
 
     if(m_classInfos.isSingleton)
     {
-        out<<"\nclass "<<m_classInfos.name<<"Singleton : public Singleton<"<<m_classInfos.name<<">\n";
+        out<<"\nclass "<<m_classInfos.name.toStdString()<<"Singleton : public Singleton<"<<m_classInfos.name.toStdString()<<">\n";
         out<<"{};\n";
     }
 
-    out<<"\n#endif // "<<m_classInfos.name.toUpper()<<"_H";
+    out<<"\n#endif // "<<toUpper(m_classInfos.name)<<"_H";
 
     if(!m_hasConstructor && m_needsConstructor)
-        m_prototypes.removeFirst();
+        m_prototypes.erase(m_prototypes.begin());
 
-    out.flush();
+    m_content = out.str();
 }
 
 void HeaderSerializer::write()
 {
-    QDir().mkpath(m_output);
+    std::filesystem::create_directories(m_output);
 
-    QFile file(m_output+"/"+m_classInfos.name+".h");
+    std::string filePath = m_output+"/"+m_classInfos.name.toStdString()+".h";
+    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - HeaderSerializer - Ouverture du fichier echouée"<<m_output;
+    if (!file.is_open())
+    {
+        std::cerr << "ERREUR - HeaderSerializer - Ouverture du fichier échouée " << m_output << std::endl;
+        return;
+    }
 
-    file.resize(0);
-
-    QTextStream out(&file);
-
-    out<<m_content;
-
-    out.flush();
-
+    file << m_content;
     file.close();
 }
 
-void HeaderSerializer::addInclude(const QString &include)
+void HeaderSerializer::addInclude(const std::string &include)
 {
-    if(!m_includes.contains(include))
-        m_includes<<include;
+    if(std::find(m_includes.begin(), m_includes.end(), include) == m_includes.end())
+        m_includes.push_back(include);
 }
 
 void HeaderSerializer::addFunction(FunctionPrototype prototype)
@@ -262,20 +259,20 @@ void HeaderSerializer::addFunction(FunctionPrototype prototype)
     if(prototype.name == m_classInfos.name)
         m_hasConstructor = true;
 
-    m_prototypes<<prototype;
+    m_prototypes.push_back(prototype);
 }
 
 void HeaderSerializer::addClassVariable(ClassVariable variable)
 {
-    m_variables<<variable;
+    m_variables.push_back(variable);
 }
 
-void HeaderSerializer::addImplicitClass(const QString &implicitClass)
+void HeaderSerializer::addImplicitClass(const std::string &implicitClass)
 {
-    m_implicitClasses<<implicitClass;
+    m_implicitClasses.push_back(implicitClass);
 }
 
-void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, QTextStream &out)
+void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, std::ostringstream &out)
 {
     out<<"\n  ";
 
@@ -290,7 +287,7 @@ void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, QText
         if(prototype.returnType.link == SHARED_POINTER)
             out<<"QSharedPointer<";
 
-        out<<prototype.returnType.type;
+        out<<prototype.returnType.type.toStdString();
 
         if(prototype.returnType.link == REFERENCE)
             out<<"&";
@@ -304,7 +301,7 @@ void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, QText
         out<<" ";
     }
 
-    out<<prototype.name<<"(";
+    out<<prototype.name.toStdString()<<"(";
 
     for(int i = 0; i < prototype.parameters.size(); i++)
     {
@@ -314,7 +311,7 @@ void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, QText
         if(prototype.parameters[i].link == SHARED_POINTER)
             out<<"QSharedPointer<";
 
-        out<<prototype.parameters[i].type;
+        out<<prototype.parameters[i].type.toStdString();
 
         if(prototype.parameters[i].isContainer)
         {
@@ -323,7 +320,7 @@ void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, QText
             if(prototype.parameters[i].containerShell.link == SHARED_POINTER)
                 out<<"QSharedPointer<";
 
-            out<<prototype.parameters[i].containerShell.type;
+            out<<prototype.parameters[i].containerShell.type.toStdString();
 
             if(prototype.parameters[i].containerShell.link == REFERENCE)
                 out<<"&";
@@ -348,7 +345,7 @@ void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, QText
         else if(prototype.parameters[i].link == SHARED_POINTER)
             out<<">";
 
-        out<<prototype.parameters[i].name;
+        out<<prototype.parameters[i].name.toStdString();
 
         if(i+1 != prototype.parameters.size())
             out<<", ";
@@ -362,7 +359,7 @@ void HeaderSerializer::writeFunctionPrototype(FunctionPrototype prototype, QText
     out<<";";
 }
 
-void HeaderSerializer::writeClassVariable(ClassVariable variable, QTextStream &out)
+void HeaderSerializer::writeClassVariable(ClassVariable variable, std::ostringstream &out)
 {
     out<<"\n  ";
 
@@ -372,7 +369,7 @@ void HeaderSerializer::writeClassVariable(ClassVariable variable, QTextStream &o
     if(variable.variable.link == SHARED_POINTER)
         out<<"QSharedPointer<";
 
-    out<<variable.variable.type;
+    out<<variable.variable.type.toStdString();
 
     if(variable.variable.isContainer)
     {
@@ -381,7 +378,7 @@ void HeaderSerializer::writeClassVariable(ClassVariable variable, QTextStream &o
         if(variable.variable.containerShell.link == SHARED_POINTER)
             out<<"QSharedPointer<";
 
-        out<<variable.variable.containerShell.type;
+        out<<variable.variable.containerShell.type.toStdString();
 
         if(variable.variable.containerShell.link == REFERENCE)
             out<<"&";
@@ -408,5 +405,5 @@ void HeaderSerializer::writeClassVariable(ClassVariable variable, QTextStream &o
     out<<" ";
 
 
-    out<<variable.variable.name<<";";
+    out<<variable.variable.name.toStdString()<<";";
 }

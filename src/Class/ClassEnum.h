@@ -7,14 +7,14 @@
 class ClassEnum : public AbstractSerializer
 {
 public:
-    ClassEnum(const QString &output, ClassLocalizer *localizer);
+    ClassEnum(const std::string &output, ClassLocalizer *localizer);
 
     void serialize();
     void write();
 
 private:
-    QString m_fileName;
-    QByteArray m_content;
+    std::string m_fileName;
+    std::string m_content;
     ClassLocalizer *m_localizer;
 };
 

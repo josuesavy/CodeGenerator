@@ -6,13 +6,13 @@
 class AbstractParser
 {
 public:
-    AbstractParser(const QString &input);
+    AbstractParser(const std::string &input);
     virtual ~AbstractParser();
 
     virtual void parse() = 0;
 
 protected:
-    QString m_input;
+    std::string m_input;
 };
 
 #endif // ABSTRACTPARSER_H

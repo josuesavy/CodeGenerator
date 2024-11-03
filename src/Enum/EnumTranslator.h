@@ -7,20 +7,22 @@
 #include "src/Splitter.h"
 #include "src/Translator.h"
 
+#include <fstream>
+
 class EnumTranslator : public AbstractParser, public AbstractSerializer
 {
 public:
-    EnumTranslator(const QString &input, const QString &output);
+    EnumTranslator(const std::string &input, const std::string &output);
 
     virtual void parse();
     virtual void serialize();
     virtual void write();
 
-    QString getName() const;
+    std::string getName() const;
 
 private:
     Splitter m_splitter;
-    QByteArray m_content;
+    std::string m_content;
 };
 
 #endif // ENUMTRANSLATOR_H

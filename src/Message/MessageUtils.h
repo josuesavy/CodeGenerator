@@ -7,7 +7,7 @@
 class MessageUtils : public AbstractSerializer
 {
 public:
-    MessageUtils(const QString &output, MessageLocalizer *localizer);
+    MessageUtils(const std::string &output, MessageLocalizer *localizer);
     ~MessageUtils();
 
     virtual void serialize();

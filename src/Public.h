@@ -12,7 +12,7 @@
 
 #define INVALID -1
 
-#define MAJ_VERSION "2.67.10.15"
+#define MAJ_VERSION "2.73.3.12"
 
 #define PUBLIC_PATH "src/utils/Public.h"
 #define READER_PATH "src/utils/io/Reader.h"
@@ -117,5 +117,12 @@ struct FunctionData
     FunctionPrototype prototype;
     QString content;
 };
+
+inline std::string toUpper(const QString& str)
+{
+    std::string result = str.toStdString();
+    std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+    return result;
+}
 
 #endif // PUBLIC_H

@@ -1,6 +1,6 @@
 #include "DataTranslator.h"
 
-DataTranslator::DataTranslator(const QString &input, const QString &output):
+DataTranslator::DataTranslator(const std::string &input, const std::string &output):
     AbstractParser(input),
     AbstractSerializer(output),
     m_splitter(input),
@@ -87,9 +87,9 @@ void DataTranslator::serialize()
 
     m_source = new SourceSerializer(m_output, classInfos);
 
-    m_source->getHeader().addInclude(QString(DATA_UTILS_PATH)+"/"+QString(DATA_BASE_NAME)+".h");
+    m_source->getHeader().addInclude(std::string(DATA_UTILS_PATH)+"/"+std::string(DATA_BASE_NAME)+".h");
 
-    foreach(const QString &include, m_manualIncludes)
+    foreach(const std::string &include, m_manualIncludes)
         m_source->getHeader().addInclude(include);
 
     for(int i = 0; i < m_anticipatedDeclarations.size(); i++)
@@ -238,17 +238,17 @@ void DataTranslator::write()
     m_source->write();
 }
 
-void DataTranslator::addManualInclude(QString include)
+void DataTranslator::addManualInclude(std::string include)
 {
-    m_manualIncludes<<include;
+    m_manualIncludes.push_back(include);
 }
 
-void DataTranslator::addAnticipatedDeclaration(QString className, QString include)
+void DataTranslator::addAnticipatedDeclaration(std::string className, std::string include)
 {
-    QPair<QString, QString> pair;
+    std::pair<std::string, std::string> pair;
     pair.first = className;
     pair.second = include;
-    m_anticipatedDeclarations<<pair;
+    m_anticipatedDeclarations.push_back(pair);
 }
 
 QStringList DataTranslator::getMissingIncludes() const
@@ -384,10 +384,6 @@ QString DataTranslator::getFieldTranslatedLine(Variable variable, bool isFirst)
 
         else
         {
-            if (m_splitter.getClassInfos().name == "SoundAnimation"){
-                qDebug() << "ui";
-            }
-
             line += "read";
 
             if(variable.type == "uint")

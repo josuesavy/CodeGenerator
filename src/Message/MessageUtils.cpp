@@ -1,6 +1,6 @@
 #include "MessageUtils.h"
 
-MessageUtils::MessageUtils(const QString &output, MessageLocalizer *localizer):
+MessageUtils::MessageUtils(const std::string &output, MessageLocalizer *localizer):
     AbstractSerializer(output),
     m_localizer(localizer)
 {
@@ -19,8 +19,8 @@ void MessageUtils::serialize()
 
     m_source = new SourceSerializer(m_output+"/"+MESSAGE_UTILS_PATH, classInfos);
 
-    m_source->getHeader().addInclude(QString(PUBLIC_PATH));
-    m_source->getHeader().addInclude(QString(MESSAGE_UTILS_PATH)+"/"+QString(MESSAGE_ENUM_NAME)+".h");
+    m_source->getHeader().addInclude(std::string(PUBLIC_PATH));
+    m_source->getHeader().addInclude(std::string(MESSAGE_UTILS_PATH)+"/"+std::string(MESSAGE_ENUM_NAME)+".h");
 
     FunctionData getName;
     getName.prototype.name = "getName";
@@ -33,11 +33,10 @@ void MessageUtils::serialize()
     getName.prototype.parameters<<parameter;
     getName.prototype.returnType.type = "QString";
 
-    QTextStream nameOut(&getName.content, QIODevice::WriteOnly);
-
+    std::ostringstream nameOut;
     bool isFirst = true;
 
-    foreach(const MessageTranslator &child, m_localizer->getChildren())
+    for(const MessageTranslator &child : m_localizer->getChildren())
     {
         if(isFirst)
             isFirst = false;
@@ -45,17 +44,18 @@ void MessageUtils::serialize()
         else
             nameOut<<"\nelse ";
 
-        nameOut<<"if(messageEnum == "<<QString(MESSAGE_ENUM_NAME)<<"::"<<child.getName().toUpper()<<")";
-        nameOut<<"\n    return \""<<child.getName()<<"\";";
+        nameOut<<"if(messageEnum == "<<std::string(MESSAGE_ENUM_NAME)<<"::"<<toUpper(child.getName())<<")";
+        nameOut<<"\n    return \""<<child.getName().toStdString()<<"\";";
         nameOut<<"\n";
     }
 
     nameOut<<"\nelse";
     nameOut<<"\n{";
-    nameOut<<"\nqDebug()<<\"ERROR - "<<MESSAGE_UTILS_NAME<<" - Don't know the enum:\"<<(int)messageEnum;";
+    nameOut<<"\nqDebug()<<\"ERROR - "<<std::string(MESSAGE_UTILS_NAME)<<" - Don't know the enum:\"<<(int)messageEnum;";
     nameOut<<"\nreturn \"\";";
     nameOut<<"\n}";
 
+    getName.content = QString::fromStdString(nameOut.str());
     m_source->addFunction(getName);
 
     m_source->serialize();

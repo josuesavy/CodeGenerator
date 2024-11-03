@@ -7,7 +7,7 @@
 class DataConverter : public AbstractSerializer
 {
 public:
-    DataConverter( const QString &output, DataLocalizer *localizer);
+    DataConverter(const std::string &output, DataLocalizer *localizer);
     ~DataConverter();
 
     virtual void serialize();

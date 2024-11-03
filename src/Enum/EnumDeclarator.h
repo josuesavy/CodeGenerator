@@ -7,15 +7,15 @@
 class EnumDeclarator : AbstractSerializer
 {
 public:
-    EnumDeclarator(const QString &output, EnumLocalizer *localizer);
+    EnumDeclarator(const std::string &output, EnumLocalizer *localizer);
 
     void serialize();
     void write();
 
 private:
-    QString m_fileName;
+    std::string m_fileName;
     EnumLocalizer *m_localizer;
-    QByteArray m_content;
+    std::string m_content;
 };
 
 #endif // ENUMDECLARATOR_H

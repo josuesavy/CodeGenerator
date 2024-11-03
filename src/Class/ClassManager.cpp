@@ -1,6 +1,6 @@
 #include "ClassManager.h"
 
-ClassManager::ClassManager(const QString &input, const QString &output, ClassLocalizer *localizer):
+ClassManager::ClassManager(const std::string &input, const std::string &output, ClassLocalizer *localizer):
     AbstractParser(input),
     AbstractSerializer(output),
     m_localizer(localizer),
@@ -18,36 +18,35 @@ void ClassManager::parse()
 {
     m_splitter.parse();
 
-    QString content;
-    foreach(const FunctionData &funct, m_splitter.getFunctions())
+    std::string content;
+    for(const FunctionData &funct : m_splitter.getFunctions())
     {
         if(funct.prototype.name == "register")
         {
-            content = funct.content;
+            content = funct.content.toStdString();
             break;
         }
     }
 
-    QTextStream in(&content, QIODevice::ReadOnly);
 
-
-    QString line;
+    std::istringstream in(content);
+    std::string line;
 
     do
     {
-        line = in.readLine();
-        line = line.simplified();
+        std::getline(in, line);
+        line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
 
-        if(line.contains("StoreDataManager.getInstance().registerClass(new "))
+        if (line.find("StoreDataManager.getInstance().registerClass(new ") != std::string::npos)
         {
-            line.remove("StoreDataManager.getInstance().registerClass(new ");
-            line.remove("(),true,true);");
+            line.erase(0, line.find("new ") + 4);
+            line.erase(line.find("(),true,true);"));
 
-            if(!m_derivableChildren.contains(line))
-                m_derivableChildren<<line;
+            if (std::find(m_derivableChildren.begin(), m_derivableChildren.end(), line) == m_derivableChildren.end())
+                m_derivableChildren<<QString::fromStdString(line);
         }
 
-    } while(!line.isNull());
+    } while (!in.eof());
 
     m_localizer->setDerivableChildren(m_derivableChildren);
 }
@@ -60,12 +59,12 @@ void ClassManager::serialize()
 
     m_source = new SourceSerializer(m_output+"/"+CLASS_UTILS_PATH, classInfos);
 
-    m_source->getHeader().addInclude(QString(CLASS_UTILS_PATH)+"/"+QString(CLASS_BASE_NAME)+".h");
+    m_source->getHeader().addInclude(std::string(CLASS_UTILS_PATH)+"/"+std::string(CLASS_BASE_NAME)+".h");
 
-    foreach(const QString &include, m_splitter.getIncludes())
+    for(const QString &include : m_splitter.getIncludes())
     {
-        QString translated = Translator::translateInclude(include);
-        if(!translated.isEmpty())
+        std::string translated = Translator::translateInclude(include).toStdString();
+        if(!translated.empty())
             m_source->addInclude(translated);
     }
 
@@ -78,37 +77,37 @@ void ClassManager::serialize()
     parameter.name = "classId";
     getClass.prototype.parameters<<parameter;
 
-    QTextStream out(&getClass.content, QIODevice::WriteOnly);
-
+    std::ostringstream out;
     out<<"switch(classId)\n";
     out<<"{\n";
 
-    QHash<QString, int> table;
+    std::unordered_map<std::string, int> table;
 
-    foreach(const ClassTranslator &child, m_localizer->getChildren())
-        table[child.getName()] = child.getId();
+    for(const ClassTranslator &child : m_localizer->getChildren())
+        table[child.getName().toStdString()] = child.getId();
 
     out<<"default:\n";
     out<<"{\n";
-    out<<"qDebug()<<\"ERREUR - ClassManager - Ne connait de classe possedant l'id\"<<"<<parameter.name<<";\n";
-    out<<"return QSharedPointer<"+QString(CLASS_BASE_NAME)+">();\n";
+    out<<"qDebug()<<\"ERREUR - ClassManager - Ne connait de classe possedant l'id\"<<"<<parameter.name.toStdString()<<";\n";
+    out<<"return QSharedPointer<"+std::string(CLASS_BASE_NAME)+">();\n";
     out<<"}\n\n";
 
-    foreach(const QString &derivableChild, m_derivableChildren)
+    for(const QString &derivableChild : m_derivableChildren)
     {
-        if(table.contains(derivableChild))
+        if (table.find(derivableChild.toStdString()) != table.end())
         {
-            out<<"case "<<table[derivableChild]<<":\n";
-            out<<"  return QSharedPointer<"+QString(CLASS_BASE_NAME)+">(new "<<derivableChild<<"());\n";
+            out<<"case "<<table[derivableChild.toStdString()]<<":\n";
+            out<<"  return QSharedPointer<"+std::string(CLASS_BASE_NAME)+">(new "<<derivableChild.toStdString()<<"());\n";
             out<<"\n";
         }
 
         else
-            qCritical()<<"ERREUR - ClassManager - Ne connait pas la classe"<<derivableChild;
+            std::cerr<<"ERREUR - ClassManager - Ne connait pas la classe"<<derivableChild.toStdString()<<std::endl;
     }
 
     out<<"}\n";
 
+    getClass.content = QString::fromStdString(out.str());
     m_source->addFunction(getClass);
 
     m_source->serialize();

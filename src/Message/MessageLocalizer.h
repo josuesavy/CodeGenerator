@@ -7,7 +7,7 @@
 class MessageLocalizer : public AbstractParser, public AbstractSerializer
 {
 public:
-    MessageLocalizer(const QString &input, const QString &output);
+    MessageLocalizer(const std::string &input, const std::string &output);
     ~MessageLocalizer();
 
     virtual void parse();
@@ -17,7 +17,7 @@ public:
     const QList<MessageTranslator> &getChildren() const;
 
 private:
-    void loadChild(QString childName, QHash<QString, int> &toLoad, QString previous = "", bool ignorePrevious = false);
+    void loadChild(std::string childName, std::unordered_map<std::string, int> &toLoad, std::string previous = "", bool ignorePrevious = false);
 
     QList<MessageTranslator> m_children;
 };

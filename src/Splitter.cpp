@@ -1,6 +1,6 @@
 #include "Splitter.h"
 
-Splitter::Splitter(const QString &input):
+Splitter::Splitter(const std::string &input):
     AbstractParser(input)
 {
 }
@@ -13,7 +13,7 @@ void Splitter::parse()
     bool isWaitingForClass = false;
     int classBracket = -1;
 
-    QFile file(m_input);
+    QFile file(QString::fromStdString(m_input));
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         qCritical()<<"ERREUR - AbstractSerializer - Ouverture du fichier echouee"<<m_input;

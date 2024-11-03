@@ -7,7 +7,7 @@
 class ClassLocalizer : public AbstractParser, public AbstractSerializer
 {
 public:
-    ClassLocalizer(const QString &input, const QString &output);
+    ClassLocalizer(const std::string &input, const std::string &output);
     ~ClassLocalizer();
 
     virtual void parse();
@@ -18,12 +18,12 @@ public:
     const QList<ClassTranslator> &getChildren() const;
 
 private:
-    void orderChild(QString childName, QHash<QString, int> &toLoad, QString previous = "", bool ignorePrevious = false);
-    bool hasPointers(QString childName, QHash<QString, int> &toLoad);
+    void orderChild(std::string childName, std::unordered_map<std::string, int> &toLoad, std::string previous = "", bool ignorePrevious = false);
+    bool hasPointers(std::string childName, std::unordered_map<std::string, int> &toLoad);
 
     QList<ClassTranslator> m_children;
-    QList<ClassTranslator*> m_orderedChildren;
-    QStringList m_derivableChildren;
+    std::vector<ClassTranslator*> m_orderedChildren;
+    std::vector<std::string> m_derivableChildren;
 };
 
 #endif // CLASSLOCALIZER_H

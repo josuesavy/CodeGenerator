@@ -4,15 +4,17 @@
 #include "AbstractSerializer.h"
 #include "HeaderSerializer.h"
 
+#include <fstream>
+
 class SourceSerializer : public AbstractSerializer
 {
 public:
-    SourceSerializer(const QString &output, const ClassInfos &classInfos);
+    SourceSerializer(const std::string &output, const ClassInfos &classInfos);
 
     virtual void serialize();
     virtual void write();
 
-    void addInclude(const QString &include);
+    void addInclude(const std::string &include);
     void addFunction(FunctionData function);
 
     HeaderSerializer &getHeader();
@@ -22,9 +24,9 @@ private:
     bool m_needsConstructor;
     HeaderSerializer m_header;
     ClassInfos m_classInfos;
-    QList<FunctionData> m_functions;
-    QStringList m_includes;
-    QByteArray m_content;
+    std::vector<FunctionData> m_functions;
+    std::vector<std::string> m_includes;
+    std::string m_content;
 };
 
 #endif // SOURCESERIALIZER_H

@@ -1,6 +1,6 @@
 #include "EnumDeclarator.h"
 
-EnumDeclarator::EnumDeclarator(const QString &output, EnumLocalizer *localizer):
+EnumDeclarator::EnumDeclarator(const std::string &output, EnumLocalizer *localizer):
     AbstractSerializer(output),
     m_localizer(localizer),
     m_fileName(ENUM_DECLARATOR_NAME)
@@ -10,10 +10,10 @@ EnumDeclarator::EnumDeclarator(const QString &output, EnumLocalizer *localizer):
 void EnumDeclarator::serialize()
 {
     m_content.clear();
-    QTextStream out(&m_content);
+    std::ostringstream out;
 
-    out<<"#ifndef "+m_fileName.toUpper()+"_H\n";
-    out<<"#define "+m_fileName.toUpper()+"_H\n";
+    out<<"#ifndef "+toUpper(QString::fromStdString(m_fileName))+"_H\n";
+    out<<"#define "+toUpper(QString::fromStdString(m_fileName))+"_H\n";
 
     out<<"\n";
 
@@ -23,34 +23,38 @@ void EnumDeclarator::serialize()
 
     out<<"\n";
 
-    foreach(const EnumTranslator &child, m_localizer->getChildren())
-        out<<"#include \""<<child.getOutput().remove(m_output).remove(0,1)+child.getName()+".h"<<"\"\n";
+    for(const EnumTranslator &child : m_localizer->getChildren())
+    {
+        std::string outputPath = child.getOutput();
+        if (outputPath.find(m_output) == 0)
+            outputPath.erase(0, m_output.length());
+        if (!outputPath.empty() && outputPath[0] == '/')
+            outputPath.erase(0, 1);
+        out << "#include \"" << outputPath + child.getName() + ".h\"\n";
+    }
 
     out<<"#ifdef _WIN32\n";
     out<<"#define DELETE 0\n";
     out<<"#endif\n";
 
-    out<<"\n#endif // "+m_fileName.toUpper()+"_H";
+    out<<"\n#endif // "+toUpper(QString::fromStdString(m_fileName))+"_H";
 
-    out.flush();
+    m_content = out.str();
 }
 
 void EnumDeclarator::write()
 {
-    QDir().mkpath(m_output+"/"+ENUM_UTILS_PATH);
+    std::filesystem::create_directories(m_output+"/"+ENUM_UTILS_PATH);
 
-    QFile file(m_output+"/"+ENUM_UTILS_PATH+"/"+m_fileName+".h");
+    std::string filePath = m_output+"/"+ENUM_UTILS_PATH+"/"+m_fileName+".h";
+    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - EnumDeclarator - Ouverture du fichier echouée"<<m_output+"/"+ENUM_UTILS_PATH+"/"+m_fileName+".h";
+    if (!file.is_open())
+    {
+        std::cerr << "ERREUR - EnumTranslator - Ouverture du fichier échouée: " << filePath << std::endl;
+        return;
+    }
 
-    file.resize(0);
-
-    QTextStream out(&file);
-
-    out<<m_content;
-
-    out.flush();
-
+    file << m_content;
     file.close();
 }

@@ -7,14 +7,14 @@
 class MessageDeclarator : public AbstractSerializer
 {
 public:
-    MessageDeclarator(const QString &output, MessageLocalizer *localizer);
+    MessageDeclarator(const std::string &output, MessageLocalizer *localizer);
 
     virtual void serialize();
     virtual void write();
 
 private:
-    QString m_fileName;
-    QByteArray m_content;
+    std::string m_fileName;
+    std::string m_content;
     MessageLocalizer *m_localizer;
 };
 

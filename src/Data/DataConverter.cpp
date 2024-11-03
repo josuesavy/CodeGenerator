@@ -1,6 +1,6 @@
 #include "DataConverter.h"
 
-DataConverter::DataConverter(const QString &output, DataLocalizer *localizer):
+DataConverter::DataConverter(const std::string &output, DataLocalizer *localizer):
     AbstractSerializer(output),
     m_localizer(localizer)
 {
@@ -19,8 +19,8 @@ void DataConverter::serialize()
 
     m_source = new SourceSerializer(m_output+"/"+DATA_UTILS_PATH, classInfos);
 
-    m_source->getHeader().addInclude(QString(DATA_UTILS_PATH)+"/"+QString(DATA_DECLARATOR_NAME)+".h");
-    m_source->getHeader().addInclude(QString(DATA_UTILS_PATH)+"/"+QString(DATA_TYPE_DECLARATOR_NAME )+".h");
+    m_source->getHeader().addInclude(std::string(DATA_UTILS_PATH)+"/"+std::string(DATA_DECLARATOR_NAME)+".h");
+    m_source->getHeader().addInclude(std::string(DATA_UTILS_PATH)+"/"+std::string(DATA_TYPE_DECLARATOR_NAME )+".h");
 
     FunctionData getClass;
     getClass.prototype.name = "getClass";
@@ -34,11 +34,11 @@ void DataConverter::serialize()
     parameter.link = REFERENCE;
     getClass.prototype.parameters<<parameter;
 
-    QTextStream classOut(&getClass.content, QIODevice::WriteOnly);
+    std::ostringstream classOut;
 
     bool isFirst = true;
 
-    foreach(const DataTranslator &child, m_localizer->getChildren())
+    for(const DataTranslator &child : m_localizer->getChildren())
     {
         if(isFirst)
             isFirst = false;
@@ -46,12 +46,12 @@ void DataConverter::serialize()
         else
             classOut<<"\nelse ";
 
-        classOut<<"if(name == \""<<child.getDofusName()<<"\")";
-        classOut<<"\n    return QSharedPointer<"<<DATA_BASE_NAME<<">(new "<<child.getName()<<"());";
+        classOut<<"if(name == \""<<child.getDofusName().toStdString()<<"\")";
+        classOut<<"\n    return QSharedPointer<"<<DATA_BASE_NAME<<">(new "<<child.getName().toStdString()<<"());";
         classOut<<"\n";
     }
 
-    foreach(const DataTranslator &child, m_localizer->getUselessChildren())
+    for(const DataTranslator &child : m_localizer->getUselessChildren())
     {
         if(isFirst)
             isFirst = false;
@@ -59,7 +59,7 @@ void DataConverter::serialize()
         else
             classOut<<"\nelse ";
 
-        classOut<<"if(name == \""<<child.getDofusName()<<"\")";
+        classOut<<"if(name == \""<<child.getDofusName().toStdString()<<"\")";
         classOut<<"\n    return QSharedPointer<"<<DATA_BASE_NAME<<">(NULL);";
         classOut<<"\n";
     }
@@ -70,6 +70,7 @@ void DataConverter::serialize()
     classOut<<"\nreturn QSharedPointer<"<<DATA_BASE_NAME<<">(NULL);";
     classOut<<"\n}";
 
+    getClass.content = QString::fromStdString(classOut.str());
     m_source->addFunction(getClass);
 
     FunctionData getEnum;
@@ -78,12 +79,12 @@ void DataConverter::serialize()
     getEnum.prototype.returnType.type = QString(DATA_ENUM_TYPE_NAME);
     getEnum.prototype.parameters<<parameter;
 
-    QTextStream enumOut(&getEnum.content, QIODevice::WriteOnly);
 
+    std::ostringstream enumOut;
 
     isFirst = true;
 
-    foreach(const DataTranslator &child, m_localizer->getChildren())
+    for(const DataTranslator &child : m_localizer->getChildren())
     {
         if(!child.getModule().isEmpty())
         {
@@ -93,13 +94,13 @@ void DataConverter::serialize()
             else
                 enumOut<<"\nelse ";
 
-            enumOut<<"if(name == \""<<child.getModule()<<"\")";
-            enumOut<<"\n    return "+QString(DATA_ENUM_TYPE_NAME)+"::"+child.getModule().toUpper()+";";
+            enumOut<<"if(name == \""<<child.getModule().toStdString()<<"\")";
+            enumOut<<"\n    return "+std::string(DATA_ENUM_TYPE_NAME)+"::"+toUpper(child.getModule())+";";
             enumOut<<"\n";
         }
     }
 
-    foreach(const DataTranslator &child, m_localizer->getUselessChildren())
+    for(const DataTranslator &child : m_localizer->getUselessChildren())
     {
             if(isFirst)
                 isFirst = false;
@@ -107,17 +108,18 @@ void DataConverter::serialize()
             else
                 enumOut<<"\nelse ";
 
-            enumOut<<"if(name == \""<<child.getModule()<<"\")";
-            enumOut<<"\n    return "+QString(DATA_ENUM_TYPE_NAME)+"::UNKNOWN;";
+            enumOut<<"if(name == \""<<child.getModule().toStdString()<<"\")";
+            enumOut<<"\n    return "+std::string(DATA_ENUM_TYPE_NAME)+"::UNKNOWN;";
             enumOut<<"\n";
     }
 
     enumOut<<"\nelse";
     enumOut<<"\n{";
     enumOut<<"\nqDebug()<<\"ERREUR - "<<DATA_CONVERTER_NAME<<" - Ne connait pas l'enum :\"<<name;";
-    enumOut<<"\nreturn "+QString(DATA_ENUM_TYPE_NAME)+"::UNKNOWN;";
+    enumOut<<"\nreturn "+std::string(DATA_ENUM_TYPE_NAME)+"::UNKNOWN;";
     enumOut<<"\n}";
 
+    getEnum.content = QString::fromStdString(enumOut.str());
     m_source->addFunction(getEnum);
 
     m_source->serialize();

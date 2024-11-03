@@ -7,7 +7,7 @@
 class ClassManager : public AbstractParser, public AbstractSerializer
 {
 public:
-    ClassManager(const QString &input, const QString &output, ClassLocalizer *localizer);
+    ClassManager(const std::string &input, const std::string &output, ClassLocalizer *localizer);
     ~ClassManager();
 
     virtual void parse();

@@ -1,6 +1,6 @@
 #include "GlobalTranslator.h"
 
-GlobalTranslator::GlobalTranslator(const QString &input, const QString &output, TranslationPart translationPart) :
+GlobalTranslator::GlobalTranslator(const std::string &input, const std::string &output, TranslationPart translationPart) :
     AbstractParser(input),
     AbstractSerializer(output),
     m_translationPart(translationPart),
@@ -23,7 +23,7 @@ GlobalTranslator::GlobalTranslator(const QString &input, const QString &output, 
 
 void GlobalTranslator::parse()
 {    
-    qDebug()<<"GlobalTranslator - Parsing...";
+    std::cout<<"GlobalTranslator - Parsing..."<<std::endl;
 
     if(m_translationPart == TRANSLATION_1)
          m_dataLocalizer.parse();
@@ -41,7 +41,7 @@ void GlobalTranslator::parse()
 
 void GlobalTranslator::serialize()
 {
-    qDebug()<<"GlobalTranslator - Serialization...";
+    std::cout<<"GlobalTranslator - Serialization..."<<std::endl;
 
     if(m_translationPart == TRANSLATION_1)
     {
@@ -70,7 +70,7 @@ void GlobalTranslator::serialize()
 
 void GlobalTranslator::write()
 {
-    qDebug()<<"GlobalTranslator - Writing...";
+    std::cout<<"GlobalTranslator - Writing..."<<std::endl;
 
     if(m_translationPart == TRANSLATION_1)
     {

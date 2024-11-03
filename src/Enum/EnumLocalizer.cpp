@@ -1,6 +1,6 @@
 #include "EnumLocalizer.h"
 
-EnumLocalizer::EnumLocalizer(const QString &input, const QString &output):
+EnumLocalizer::EnumLocalizer(const std::string &input, const std::string &output):
     AbstractParser(input),
     AbstractSerializer(output)
 {
@@ -8,16 +8,19 @@ EnumLocalizer::EnumLocalizer(const QString &input, const QString &output):
 
 void EnumLocalizer::parse()
 {
-    QDirIterator dirIt(m_input+"/"+DOFUS_ENUM_PATH, QDirIterator::Subdirectories);
+    std::string path = m_input + "/" + DOFUS_ENUM_PATH;
+    std::filesystem::recursive_directory_iterator dirIt(path);
+    std::filesystem::recursive_directory_iterator end;
 
-    while (dirIt.hasNext())
+    while (dirIt != end)
     {
-        dirIt.next();
-        if (QFileInfo(dirIt.filePath()).isFile())
+        if (dirIt->is_regular_file())
         {
-            m_children<<EnumTranslator(dirIt.filePath(), m_output+"/"+ENUM_PATH+dirIt.filePath().remove(dirIt.fileName()).remove(m_input+"/"+DOFUS_ENUM_PATH));
-            m_children.last().parse();
+            m_children.emplace_back(EnumTranslator(dirIt->path().string(),
+                                                   m_output + "/" + ENUM_PATH + dirIt->path().parent_path().string().substr(path.size())));
+            m_children.back().parse();
         }
+        ++dirIt;
     }
 }
 
@@ -33,7 +36,7 @@ void EnumLocalizer::write()
         m_children[i].write();
 }
 
-const QList<EnumTranslator> &EnumLocalizer::getChildren() const
+const std::vector<EnumTranslator> &EnumLocalizer::getChildren() const
 {
     return m_children;
 }

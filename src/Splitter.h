@@ -9,7 +9,7 @@
 class Splitter : public AbstractParser
 {
 public:
-    Splitter(const QString &input);
+    Splitter(const std::string &input);
 
     virtual void parse();
 

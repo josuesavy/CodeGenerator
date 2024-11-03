@@ -1,6 +1,6 @@
 #include "SourceSerializer.h"
 
-SourceSerializer::SourceSerializer(const QString &output, const ClassInfos &classInfos):
+SourceSerializer::SourceSerializer(const std::string &output, const ClassInfos &classInfos):
     AbstractSerializer(output),
     m_header(output, classInfos),
     m_classInfos(classInfos),
@@ -22,13 +22,11 @@ void SourceSerializer::serialize()
     m_header.serialize();
 
     m_content.clear();
-    QTextStream out(&m_content);
+    std::ostringstream out;
 
+    out<<"#include \""<<m_classInfos.name.toStdString()+".h"<<"\"\n";
 
-
-    out<<"#include \""<<m_classInfos.name+".h"<<"\"\n";
-
-    foreach(const QString &include, m_includes)
+    for(const std::string &include : m_includes)
         out<<"#include \""<<include<<"\"\n";
 
     out<<"\n";
@@ -37,17 +35,17 @@ void SourceSerializer::serialize()
     {
         FunctionData constructor;
         constructor.prototype.name = m_classInfos.name;
-        m_functions.insert(0, constructor);
+        m_functions.insert(m_functions.begin(), constructor);
     }
 
-    foreach(const FunctionData &funct, m_functions)
+    for(const FunctionData &funct : m_functions)
     {
         if(!funct.prototype.returnType.type.isEmpty())
         {
             if(funct.prototype.returnType.link == SHARED_POINTER)
                 out<<"QSharedPointer<";
 
-            out<<funct.prototype.returnType.type;
+            out<<funct.prototype.returnType.type.toStdString();
 
             if(funct.prototype.returnType.link == REFERENCE)
                 out<<"&";
@@ -61,7 +59,7 @@ void SourceSerializer::serialize()
             out<<" ";
         }
 
-        out<<m_classInfos.name<<"::"<< funct.prototype.name<<"(";
+        out<<m_classInfos.name.toStdString()<<"::"<< funct.prototype.name.toStdString()<<"(";
 
 
         for(int i = 0; i < funct.prototype.parameters.size(); i++)
@@ -72,7 +70,7 @@ void SourceSerializer::serialize()
             if(funct.prototype.parameters[i].link == SHARED_POINTER)
                 out<<"QSharedPointer<";
 
-            out<<funct.prototype.parameters[i].type;
+            out<<funct.prototype.parameters[i].type.toStdString();
 
             if(funct.prototype.parameters[i].isContainer)
             {
@@ -81,7 +79,7 @@ void SourceSerializer::serialize()
                 if(funct.prototype.parameters[i].containerShell.link == SHARED_POINTER)
                     out<<"QSharedPointer<";
 
-                out<<funct.prototype.parameters[i].containerShell.type;
+                out<<funct.prototype.parameters[i].containerShell.type.toStdString();
 
                 if(funct.prototype.parameters[i].containerShell.link == REFERENCE)
                     out<<"&";
@@ -106,7 +104,7 @@ void SourceSerializer::serialize()
             else if(funct.prototype.parameters[i].link == SHARED_POINTER)
                 out<<">";
 
-            out<<funct.prototype.parameters[i].name;
+            out<<funct.prototype.parameters[i].name.toStdString();
 
             if(i+1 != funct.prototype.parameters.size())
                 out<<", ";
@@ -121,7 +119,7 @@ void SourceSerializer::serialize()
         {
             bool isFirst = true;
 
-            foreach(const InheritedClass &inherited, m_classInfos.inheritedClasses)
+            for(const InheritedClass &inherited : m_classInfos.inheritedClasses)
             {
                 if(!inherited.passedParameters.isEmpty())
                 {
@@ -136,11 +134,11 @@ void SourceSerializer::serialize()
                     else
                         out<<",";
 
-                    out<<inherited.name+"(";
+                    out<<inherited.name.toStdString()+"(";
 
                     bool isFirstP = true;
 
-                    foreach(const QString &passedParam, inherited.passedParameters)
+                    for(const QString &passedParam : inherited.passedParameters)
                     {
                         if(isFirstP)
                             isFirstP = false;
@@ -148,7 +146,7 @@ void SourceSerializer::serialize()
                         else
                             out<<", ";
 
-                        out<<passedParam;
+                        out<<passedParam.toStdString();
                     }
 
                     out<<")";
@@ -167,7 +165,7 @@ void SourceSerializer::serialize()
 
         for(int i = 0; i < funct.content.size(); i++)
         {
-            out<<funct.content[i];
+            out<<QString(funct.content[i]).toStdString();
 
             //Brackets
             if(i+1 != funct.content.size() && funct.content[i+1] == '}')
@@ -191,43 +189,40 @@ void SourceSerializer::serialize()
     }
 
     if(!m_hasConstructor && m_needsConstructor)
-        m_functions.removeFirst();
+        m_functions.erase(m_functions.begin());
 
-    out.flush();
+    m_content = out.str();
 }
 
 void SourceSerializer::write()
 {
-    QDir().mkpath(m_output);
+    std::filesystem::create_directories(m_output);
 
-    QFile file(m_output+"/"+m_classInfos.name+".cpp");
+    std::string filePath = m_output+"/"+m_classInfos.name.toStdString()+".cpp";
+    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - SourceSerializer - Ouverture du fichier echouée"<<m_output;
+    if (!file.is_open())
+    {
+        std::cerr << "ERREUR - SourceSerializer - Ouverture du fichier échouée " << m_output << std::endl;
+        return;
+    }
 
-    file.resize(0);
-
-    QTextStream out(&file);
-
-    out<<m_content;
-
-    out.flush();
-
+    file << m_content;
     file.close();
 
     m_header.write();
 }
 
-void SourceSerializer::addInclude(const QString &include)
+void SourceSerializer::addInclude(const std::string &include)
 {
-    if(!m_includes.contains(include))
-        m_includes<<include;
+    if(std::find(m_includes.begin(), m_includes.end(), include) == m_includes.end())
+        m_includes.push_back(include);
 }
 
 void SourceSerializer::addFunction(FunctionData function)
 {
     m_header.addFunction(function.prototype);
-    m_functions<<function;
+    m_functions.push_back(function);
 }
 
 HeaderSerializer &SourceSerializer::getHeader()

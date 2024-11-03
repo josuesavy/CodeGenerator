@@ -1,6 +1,6 @@
 #include "DataLocalizer.h"
 
-DataLocalizer::DataLocalizer(const QString &input, const QString &output):
+DataLocalizer::DataLocalizer(const std::string &input, const std::string &output):
     AbstractParser(input),
     AbstractSerializer(output)
 {
@@ -8,49 +8,42 @@ DataLocalizer::DataLocalizer(const QString &input, const QString &output):
 
 void DataLocalizer::parse()
 {
-    QDirIterator dirIt(m_input+"/"+DOFUS_DATA_PATH, QDirIterator::Subdirectories);
-    QList<QPair<QString, QString>> childrenPaths;
+    std::vector<std::pair<std::string, std::string>> childrenPaths;
 
-    while (dirIt.hasNext())
-    {
-        dirIt.next();
-        if (QFileInfo(dirIt.filePath()).isFile())
-        {
-            QPair<QString, QString> pair;
-            pair.first = dirIt.filePath();
-            pair.second = m_output+"/"+DATA_PATH+dirIt.filePath().remove(dirIt.fileName()).remove(m_input+"/"+DOFUS_DATA_PATH);
+    std::filesystem::recursive_directory_iterator dirIt(m_input + "/" + DOFUS_DATA_PATH);
+    std::filesystem::recursive_directory_iterator end;
+
+    while (dirIt != end) {
+        if (dirIt->is_regular_file()) {
+            std::pair<std::string, std::string> pair;
+            pair.first = dirIt->path().string();
+            pair.second = m_output + "/" + DATA_PATH + dirIt->path().parent_path().string().substr(m_input.length() + std::string(DOFUS_DATA_PATH).length() + 1) + "/";
 
             Splitter quick(pair.first);
             quick.parse();
 
             bool isDataCenter = false;
 
-            foreach(const InheritedClass inherited, quick.getClassInfos().inheritedClasses)
-            {
-                if(inherited.name == "IDataCenter")
-                {
+            for (const InheritedClass &inherited : quick.getClassInfos().inheritedClasses) {
+                if (inherited.name == "IDataCenter") {
                     isDataCenter = true;
                     break;
                 }
             }
 
-            if(isDataCenter)
-            {
-                Translator::addTranslated(quick.getClassInfos().name, quick.getClassInfos().name+"Data");
-                childrenPaths<<pair;
-            }
-
-            else
-            {
+            if (isDataCenter) {
+                Translator::addTranslated(quick.getClassInfos().name, quick.getClassInfos().name + "Data");
+                childrenPaths.push_back(pair);
+            } else {
                 DataTranslator u(pair.first, pair.second);
                 u.parse();
                 m_uselessChildren<<u;
             }
         }
+        ++dirIt;
     }
 
-    for(int i = 0; i < childrenPaths.size(); i++)
-    {
+    for (size_t i = 0; i < childrenPaths.size(); i++) {
         m_children<<DataTranslator(childrenPaths[i].first, childrenPaths[i].second);
         m_children.last().parse();
     }
@@ -58,12 +51,12 @@ void DataLocalizer::parse()
 
 void DataLocalizer::serialize()
 {
-    QHash<QString, int> toLoad;
+    std::unordered_map<std::string, int> toLoad;
     for(int i = 0; i < m_children.size(); i++)
-        toLoad[m_children[i].getDofusName()] = i;
+        toLoad[m_children[i].getDofusName().toStdString()] = i;
 
-    foreach(const QString &childName, toLoad.keys())
-        loadChild(childName, toLoad);
+    for(const auto &pair : toLoad)
+        loadChild(pair.first, toLoad);
 }
 
 void DataLocalizer::write()
@@ -82,19 +75,23 @@ const QList<DataTranslator> &DataLocalizer::getUselessChildren() const
     return m_uselessChildren;
 }
 
-void DataLocalizer::loadChild(QString childName, QHash<QString, int> &toLoad, QString previous, bool ignorePrevious)
+void DataLocalizer::loadChild(std::string childName, std::unordered_map<std::string, int> &toLoad, std::string previous, bool ignorePrevious)
 {
-    foreach(const QString &missingInclude, m_children[toLoad[childName]].getMissingIncludes())
+    for(const QString &missingInclude : m_children[toLoad[childName]].getMissingIncludes())
     {
-        QString path;
+        std::string path;
 
         for(int i = 0; i < m_children.size(); i++)
         {
             if(m_children[i].getDofusName() == missingInclude)
             {
-                path = m_children[i].getOutput().remove(m_output);
-                path.remove(0,1);
-                path += m_children[i].getName()+".h";
+                path = m_children[i].getOutput();
+                size_t pos = path.find(m_output); // Trouvez l'index de m_output
+                if (pos != std::string::npos) {
+                    path.erase(pos, m_output.length()); // Supprimez m_output de path
+                }
+                path.erase(0,1);
+                path += m_children[i].getName().toStdString()+".h";
             }
         }
 
@@ -106,14 +103,14 @@ void DataLocalizer::loadChild(QString childName, QHash<QString, int> &toLoad, QS
             //            else
             m_children[toLoad[childName]].addManualInclude(path);
 
-            loadChild(missingInclude, toLoad, childName);
-            toLoad.remove(missingInclude);
+            loadChild(missingInclude.toStdString(), toLoad, childName);
+            toLoad.erase(missingInclude.toStdString());
         }
 
         else if(!ignorePrevious)
         {
-            m_children[toLoad[childName]].addAnticipatedDeclaration(m_children[toLoad[missingInclude]].getName(), path);
-            loadChild(missingInclude, toLoad, childName, true);
+            m_children[toLoad[childName]].addAnticipatedDeclaration(m_children[toLoad[missingInclude.toStdString()]].getName().toStdString(), path);
+            loadChild(missingInclude.toStdString(), toLoad, childName, true);
         }
     }
 

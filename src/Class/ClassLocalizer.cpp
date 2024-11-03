@@ -1,6 +1,6 @@
 #include "ClassLocalizer.h"
 
-ClassLocalizer::ClassLocalizer(const QString &input, const QString &output):
+ClassLocalizer::ClassLocalizer(const std::string &input, const std::string &output):
     AbstractParser(input),
     AbstractSerializer(output)
 {
@@ -13,23 +13,26 @@ ClassLocalizer::~ClassLocalizer()
 
 void ClassLocalizer::parse()
 {
-    QDirIterator dirIt(m_input+"/"+DOFUS_CLASS_PATH, QDirIterator::Subdirectories);
-    QList<QPair<QString, QString>> childrenPaths;
+    std::filesystem::path inputPath = m_input+"/"+DOFUS_CLASS_PATH;
+    std::vector<std::pair<std::string, std::string>> childrenPaths;
 
-    while (dirIt.hasNext())
+    std::filesystem::recursive_directory_iterator dirIt(inputPath), end;
+
+    while (dirIt != end)
     {
-        dirIt.next();
-        if (QFileInfo(dirIt.filePath()).isFile())
+        if (dirIt->is_regular_file())
         {
-            QPair<QString, QString> pair;
-            pair.first = dirIt.filePath();
-            pair.second = m_output+"/"+CLASS_PATH+dirIt.filePath().remove(dirIt.fileName()).remove(m_input+"/"+DOFUS_CLASS_PATH);
-            childrenPaths<<pair;
+            std::pair<std::string, std::string> pair;
+            pair.first = dirIt->path().string();
+            pair.second = m_output + "/" + CLASS_PATH + dirIt->path().parent_path().string().substr(m_input.size() + 1 + std::string(DOFUS_CLASS_PATH).size());
+            childrenPaths.emplace_back(pair);
             Splitter quick(pair.first);
             quick.parse();
 
-            Translator::addTranslated(quick.getClassInfos().name, m_derivableChildren.contains(quick.getClassInfos().name));
+            Translator::addTranslated(quick.getClassInfos().name,
+                                      std::find(m_derivableChildren.begin(), m_derivableChildren.end(), quick.getClassInfos().name) != m_derivableChildren.end());
         }
+        ++dirIt;
     }
 
     for(int i = 0; i < childrenPaths.size(); i++)
@@ -41,27 +44,27 @@ void ClassLocalizer::parse()
 
 void ClassLocalizer::serialize()
 {
-    QHash<QString, int> toLoad;
+    std::unordered_map<std::string, int> toLoad;
 
     for(int i = 0; i < m_children.size(); i++)
-        toLoad[m_children[i].getName()] = i;
+        toLoad[m_children[i].getName().toStdString()] = i;
 
-    foreach(QString x, m_derivableChildren)
+    for(std::string x : m_derivableChildren)
         orderChild(x, toLoad);
 
-    foreach(const QString &childName, toLoad.keys())
-        orderChild(childName, toLoad);
+    for(const auto &pair : toLoad)
+        orderChild(pair.first, toLoad);
 
     for(int i = 0; i < m_orderedChildren.size(); i++)
-        toLoad[m_orderedChildren[i]->getName()] = i;
+        toLoad[m_orderedChildren[i]->getName().toStdString()] = i;
 
-    foreach(ClassTranslator *child, m_orderedChildren)
+    for(ClassTranslator *child : m_orderedChildren)
     {
-        if(Translator::getLinkType(child->getName()) != SHARED_POINTER && hasPointers(child->getName(), toLoad))
+        if(Translator::getLinkType(child->getName()) != SHARED_POINTER && hasPointers(child->getName().toStdString(), toLoad))
             Translator::addTranslated(child->getName(), true);
     }
 
-    foreach(ClassTranslator *child, m_orderedChildren)
+    for(ClassTranslator *child : m_orderedChildren)
         child->serialize();
 }
 
@@ -73,7 +76,14 @@ void ClassLocalizer::write()
 
 void ClassLocalizer::setDerivableChildren(const QStringList &derivableChildren)
 {
-    m_derivableChildren = derivableChildren;
+    std::vector<std::string> stdVector;
+    stdVector.reserve(derivableChildren.size());
+
+    for (const QString& qstr : derivableChildren) {
+        stdVector.push_back(qstr.toStdString());
+    }
+
+    m_derivableChildren = stdVector;
 }
 
 const QList<ClassTranslator> &ClassLocalizer::getChildren() const
@@ -81,19 +91,23 @@ const QList<ClassTranslator> &ClassLocalizer::getChildren() const
     return m_children;
 }
 
-void ClassLocalizer::orderChild(QString childName, QHash<QString, int> &toLoad, QString previous, bool ignorePrevious)
+void ClassLocalizer::orderChild(std::string childName, std::unordered_map<std::string, int> &toLoad, std::string previous, bool ignorePrevious)
 {
-    foreach(const QString &missingInclude, m_children[toLoad[childName]].getMissingIncludes())
+    for (const QString &missingInclude : m_children[toLoad[childName]].getMissingIncludes())
     {
-        QString path;
+        std::string path;
 
         for(int i = 0; i < m_children.size(); i++)
         {
             if(m_children[i].getName() == missingInclude)
             {
-                path = m_children[i].getOutput().remove(m_output);
-                path.remove(0,1);
-                path += m_children[i].getName()+".h";
+                path = m_children[i].getOutput();
+                size_t pos = path.find(m_output); // Trouvez l'index de m_output
+                if (pos != std::string::npos) {
+                    path.erase(pos, m_output.length()); // Supprimez m_output de path
+                }
+                path.erase(0,1);
+                path += m_children[i].getName().toStdString()+".h";
             }
         }
 
@@ -105,24 +119,24 @@ void ClassLocalizer::orderChild(QString childName, QHash<QString, int> &toLoad, 
             //            else
             m_children[toLoad[childName]].addManualInclude(path);
 
-            orderChild(missingInclude, toLoad, childName);
-            toLoad.remove(missingInclude);
+            orderChild(missingInclude.toStdString(), toLoad, childName);
+            toLoad.erase(missingInclude.toStdString());
         }
 
         else if(!ignorePrevious)
         {
             Translator::addTranslated(missingInclude, true);
-            m_children[toLoad[childName]].addAnticipatedDeclaration(missingInclude, path);
-            orderChild(missingInclude, toLoad, childName, true);
+            m_children[toLoad[childName]].addAnticipatedDeclaration(missingInclude.toStdString(), path);
+            orderChild(missingInclude.toStdString(), toLoad, childName, true);
         }
     }
 
-    m_orderedChildren<<&m_children[toLoad[childName]];
+    m_orderedChildren.push_back(&m_children[toLoad[childName]]);
 }
 
-bool ClassLocalizer::hasPointers(QString childName, QHash<QString, int> &toLoad)
+bool ClassLocalizer::hasPointers(std::string childName, std::unordered_map<std::string, int> &toLoad)
 {
-    foreach(const ClassVariable &classVariable, m_orderedChildren[toLoad[childName]]->getClassVariables())
+    for (const ClassVariable &classVariable : m_orderedChildren[toLoad[childName]]->getClassVariables())
     {
         if(classVariable.variable.isContainer && Translator::isTranslated(classVariable.variable.containerShell.type) && Translator::getLinkType(classVariable.variable.containerShell.type) == SHARED_POINTER)
             return true;
@@ -131,15 +145,15 @@ bool ClassLocalizer::hasPointers(QString childName, QHash<QString, int> &toLoad)
             return true;
     }
 
-    foreach(const InheritedClass &inheritedClass, m_orderedChildren[toLoad[childName]]->getInheritedClasses())
+    for (const InheritedClass &inheritedClass : m_orderedChildren[toLoad[childName]]->getInheritedClasses())
     {
         if(Translator::isTranslated(inheritedClass.name))
         {
-            if(toLoad.contains(inheritedClass.name) && hasPointers(inheritedClass.name, toLoad))
+            if (toLoad.find(inheritedClass.name.toStdString()) != toLoad.end() && hasPointers(inheritedClass.name.toStdString(), toLoad))
                 return true;
 
             else
-                toLoad.remove(inheritedClass.name);
+                toLoad.erase(inheritedClass.name.toStdString());
         }
     }
 

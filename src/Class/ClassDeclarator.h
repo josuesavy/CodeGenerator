@@ -7,14 +7,14 @@
 class ClassDeclarator : public AbstractSerializer
 {
 public:
-    ClassDeclarator(const QString &output, ClassLocalizer *localizer);
+    ClassDeclarator(const std::string &output, ClassLocalizer *localizer);
 
     void serialize();
     void write();
 
 private:
-    QString m_fileName;
-    QByteArray m_content;
+    std::string m_fileName;
+    std::string m_content;
     ClassLocalizer *m_localizer;
 };
 

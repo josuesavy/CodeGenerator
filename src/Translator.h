@@ -2,7 +2,6 @@
 #define TRANSLATOR_H
 
 #include "Public.h"
-#include <QRegExp>
 #include <QRegularExpression>
 
 struct ConversionFunction

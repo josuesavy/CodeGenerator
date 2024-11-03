@@ -1,6 +1,6 @@
 #include "ClassDeclarator.h"
 
-ClassDeclarator::ClassDeclarator(const QString &output, ClassLocalizer *localizer):
+ClassDeclarator::ClassDeclarator(const std::string &output, ClassLocalizer *localizer):
     AbstractSerializer(output),
     m_localizer(localizer),
     m_fileName(CLASS_DECLARATOR_NAME)
@@ -10,37 +10,41 @@ ClassDeclarator::ClassDeclarator(const QString &output, ClassLocalizer *localize
 void ClassDeclarator::serialize()
 {
     m_content.clear();
-    QTextStream out(&m_content);
+    std::ostringstream out;
 
-    out<<"#ifndef "+m_fileName.toUpper()+"_H\n";
-    out<<"#define "+m_fileName.toUpper()+"_H\n";
+    out<<"#ifndef "+toUpper(QString::fromStdString(m_fileName))+"_H\n";
+    out<<"#define "+toUpper(QString::fromStdString(m_fileName))+"_H\n";
 
     out<<"\n";
 
-    foreach(const ClassTranslator &child, m_localizer->getChildren())
-        out<<"#include \""<<child.getOutput().remove(m_output).remove(0,1)+child.getName()+".h"<<"\"\n";
+    for (const ClassTranslator &child : m_localizer->getChildren())
+    {
+        std::string childOutput = child.getOutput();
+        if (childOutput.find(m_output) == 0)
+            childOutput.erase(0, m_output.length());
+        if (!childOutput.empty() && childOutput[0] == '/')
+            childOutput.erase(0, 1);
+        out << "#include \"" << childOutput << child.getName().toStdString() << ".h\"\n";
+    }
 
-    out<<"\n#endif // "+m_fileName.toUpper()+"_H";
+    out<<"\n#endif // "+toUpper(QString::fromStdString(m_fileName))+"_H";
 
-    out.flush();
+    m_content = out.str();
 }
 
 void ClassDeclarator::write()
 {
-    QDir().mkpath(m_output+"/"+CLASS_UTILS_PATH);
+    std::filesystem::create_directories(m_output+"/"+CLASS_UTILS_PATH);
 
-    QFile file(m_output+"/"+CLASS_UTILS_PATH+"/"+m_fileName+".h");
+    std::string filePath = m_output+"/"+CLASS_UTILS_PATH+"/"+m_fileName+".h";
+    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - ClassDeclarator - Ouverture du fichier echouée"<<m_output+"/"+CLASS_UTILS_PATH+"/"+m_fileName+".h";
+    if (!file.is_open())
+    {
+        std::cerr << "ERREUR - ClassDeclarator - Ouverture du fichier échouée: " << filePath << std::endl;
+        return;
+    }
 
-    file.resize(0);
-
-    QTextStream out(&file);
-
-    out<<m_content;
-
-    out.flush();
-
+    file << m_content;
     file.close();
 }

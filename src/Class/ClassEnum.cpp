@@ -1,6 +1,6 @@
 #include "ClassEnum.h"
 
-ClassEnum::ClassEnum(const QString &output, ClassLocalizer *localizer):
+ClassEnum::ClassEnum(const std::string &output, ClassLocalizer *localizer):
     AbstractSerializer(output),
     m_localizer(localizer),
     m_fileName(CLASS_ENUM_NAME)
@@ -10,19 +10,19 @@ ClassEnum::ClassEnum(const QString &output, ClassLocalizer *localizer):
 void ClassEnum::serialize()
 {
     m_content.clear();
-    QTextStream out(&m_content);
+    std::ostringstream out;
 
-    out<<"#ifndef "+m_fileName.toUpper()+"_H\n";
-    out<<"#define "+m_fileName.toUpper()+"_H\n";
+    out<<"#ifndef "+toUpper(QString::fromStdString(m_fileName))+"_H\n";
+    out<<"#define "+toUpper(QString::fromStdString(m_fileName))+"_H\n";
 
     out<<"\n";
 
-    out<<"\nenum class "+QString(CLASS_ENUM_NAME);
+    out<<"\nenum class "+std::string(CLASS_ENUM_NAME);
     out<<"\n{";
 
     bool firstRound = true;
 
-    foreach(const ClassTranslator &child, m_localizer->getChildren())
+    for(const ClassTranslator &child : m_localizer->getChildren())
     {
         if(firstRound)
             firstRound = false;
@@ -30,32 +30,29 @@ void ClassEnum::serialize()
         else
             out<<",";
 
-        out<<"\n    "<<child.getName().toUpper()<<" = "<<QString::number(child.getId());
+        out<<"\n    "<<toUpper(child.getName())<<" = "<<child.getId();
     }
 
     out<<"\n};\n";
 
-    out<<"\n#endif // "+m_fileName.toUpper()+"_H";
+    out<<"\n#endif // "+toUpper(QString::fromStdString(m_fileName))+"_H";
 
-    out.flush();
+    m_content = out.str();
 }
 
 void ClassEnum::write()
 {
-    QDir().mkpath(m_output+"/"+CLASS_UTILS_PATH);
+    std::filesystem::create_directories(m_output+"/"+CLASS_UTILS_PATH);
 
-    QFile file(m_output+"/"+CLASS_UTILS_PATH+"/"+m_fileName+".h");
+    std::string filePath = m_output+"/"+CLASS_UTILS_PATH+"/"+m_fileName+".h";
+    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qCritical()<<"ERREUR - ClassEnum - Ouverture du fichier echouée"<<m_output+"/"+CLASS_UTILS_PATH+"/"+m_fileName+".h";
+    if (!file.is_open())
+    {
+        std::cerr << "ERREUR - ClassEnum - Ouverture du fichier échouée: " << filePath << std::endl;
+        return;
+    }
 
-    file.resize(0);
-
-    QTextStream out(&file);
-
-    out<<m_content;
-
-    out.flush();
-
+    file << m_content;
     file.close();
 }
